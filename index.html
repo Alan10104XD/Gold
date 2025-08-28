@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NSA Authentication - Verificación de Productos</title>
+    <meta name="description" content="Sistema de autenticación y verificación de productos NSA">
+    <meta name="author" content="NSA Authentication">
+    
+    <meta property="og:title" content="NSA Authentication">
+    <meta property="og:description" content="Sistema de autenticación y verificación de productos">
+    <meta property="og:type" content="website">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'auth-background': 'hsl(210, 40%, 8%)',
+                        'auth-secondary': 'hsl(217, 32%, 17%)',
+                        'auth-card': 'hsl(222, 84%, 5%)',
+                        'auth-primary': 'hsl(217, 91%, 60%)',
+                        'auth-primary-dark': 'hsl(217, 91%, 50%)',
+                        border: 'hsl(217, 32%, 17%)',
+                        foreground: 'hsl(210, 40%, 98%)',
+                        'muted-foreground': 'hsl(215, 20%, 65%)',
+                        card: 'hsl(222, 84%, 5%)',
+                        accent: 'hsl(217, 32%, 17%)',
+                        'primary-foreground': 'hsl(210, 40%, 98%)',
+                        destructive: 'hsl(0, 84%, 60%)',
+                        green: {
+                            50: 'hsl(138, 76%, 97%)',
+                            400: 'hsl(142, 71%, 45%)',
+                            500: 'hsl(142, 76%, 36%)',
+                            600: 'hsl(142, 72%, 29%)',
+                            700: 'hsl(142, 69%, 58%)',
+                            900: 'hsl(140, 61%, 9%)'
+                        },
+                        red: {
+                            50: 'hsl(0, 86%, 97%)',
+                            500: 'hsl(0, 84%, 60%)',
+                            600: 'hsl(0, 72%, 51%)',
+                            900: 'hsl(0, 63%, 6%)'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #F3F4F6;
+        }
+        
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        
+        .shadow-xl {
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        
+        .shadow-2xl {
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+        }
+        
+        .backdrop-blur-sm {
+            -webkit-backdrop-filter: blur(4px);
+                    backdrop-filter: blur(4px);
+        }
+        
+        .transition-all {
+            transition-property: all;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+        
+        .hover\:scale-105:hover {
+            transform: scale(1.05);
+        }
+        
+        .card {
+            background: #FAFAFA;
+            border: 1px solid hsl(217, 32%, 17%);
+            border-radius: 0.5rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, hsl(217, 91%, 60%), hsl(217, 91%, 50%));
+            color: hsl(210, 40%, 98%);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, hsl(217, 91%, 50%), hsl(217, 91%, 60%));
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: hsl(217, 32%, 17%);
+            color: hsl(210, 40%, 98%);
+            border: 1px solid hsl(217, 32%, 17%);
+        }
+        
+        .btn-secondary:hover {
+            background: hsl(217, 32%, 20%);
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            color: white;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .toast-success {
+            background: hsl(142, 76%, 36%);
+        }
+        
+        .toast-error {
+            background: hsl(0, 84%, 60%);
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .hidden { display: none; }
+        
+        .flex { display: flex; }
+        
+        .grid { display: grid; }
+        
+        .block { display: block; }
+    </style>
+
+<style>
+	#lovable-badge {
+		position: fixed;
+		bottom: 10px;
+		right: 10px;
+		width: 141px;
+		padding: 5px 13px;	
+		background-color: #000;
+		color: #fff;
+		font-size: 12px;
+		border-radius: 5px;
+		font-family: sans-serif;
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		z-index: 1000000;
+		text-transform: none !important;
+		font-feature-settings: normal !important;
+		font-weight: 400 !important;
+	}
+</style>
+<meta name="twitter:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ee2f0f05-18f9-4e57-837a-98743855e866/id-preview-950fd849--9f3e67f4-174d-4a50-b707-33d768754ba3.lovable.app-1756389297540.png" /></head>
+<body class="min-h-screen text-black">
+    <!-- Header -->
+    <header class="backdrop-blur-sm border-b" style="background: #FAFAFA; border-bottom: 1px solid #E5E7EB;">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 p-2 rounded-lg">
+                        <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold">GOLD AUTHENTICATION</h1>
+                        <p class="text-sm text-gray-400">Verificación de base de datos online</p>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="py-20 px-4">
+        <div class="container mx-auto max-w-4xl text-center">
+            <div class="mb-8">
+                <h2 class="text-5xl font-bold mb-4">
+                    Líder en Autenticación
+                </h2>
+                <div class="flex items-center justify-center space-x-2 mb-6">
+                    <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    <p class="text-xl text-black">Verificación de base de datos online</p>
+                </div>
+            </div>
+
+            <!-- Search Section -->
+            <div class="card max-w-2xl mx-auto shadow-xl p-6">
+                <div class="text-center mb-6">
+                    <h3 class="text-2xl font-bold mb-2">Búsqueda de Productos</h3>
+                    <p class="text-gray-400">
+                        Ingresa el código del producto para verificar su autenticidad
+                    </p>
+                </div>
+                
+                <div class="space-y-6">
+                    <div class="flex space-x-2">
+                        <div class="relative flex-1">
+                            <input
+                                id="searchInput"
+                                type="text"
+                                placeholder="Ingresa el código del producto (ej: NSA001)"
+                                class="w-full h-12 px-4 pr-10 text-lg bg-white border border-gray-600 rounded-lg text-black placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                            />
+                            <svg class="absolute right-3 top-3 h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <button 
+                            id="searchBtn"
+                            class="btn btn-primary h-12 px-8"
+                        >
+                            <span id="searchBtnText">Verificar</span>
+                        </button>
+                    </div>
+                    
+                    <div class="text-sm text-gray-400 space-y-2">
+                        <p>💡 <strong>Códigos de ejemplo:</strong></p>
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            <span class="px-3 py-1 bg-[#F3F4F6] rounded-full cursor-pointer hover:bg-gray-600 transition-all" onclick="setSearchCode('NSA001')">NSA001</span>
+                            <span class="px-3 py-1 bg-[#F3F4F6] rounded-full cursor-pointer hover:bg-gray-600 transition-all" onclick="setSearchCode('NSA002')">NSA002</span>
+                            <span class="px-3 py-1 bg-[#F3F4F6] rounded-full cursor-pointer hover:bg-gray-600 transition-all" onclick="setSearchCode('NSA003')">NSA003</span>
+                            <span class="px-3 py-1 bg-[#F3F4F6] rounded-full cursor-pointer hover:bg-gray-600 transition-all" onclick="setSearchCode('FAKE001')">FAKE001</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results Section -->
+    <section id="resultsSection" class="py-12 px-4 hidden">
+        <div class="container mx-auto max-w-4xl">
+            <div id="productResult" class="card shadow-2xl overflow-hidden">
+                <!-- Results will be populated here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Not Found Section -->
+    <section id="notFoundSection" class="py-12 px-4 hidden">
+        <div class="container mx-auto max-w-4xl">
+            <div class="card shadow-xl text-center p-12">
+                <svg class="h-16 w-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h3 class="text-2xl font-bold mb-2">Código No Encontrado</h3>
+                <p class="text-gray-400 mb-6">
+                    El código <strong id="notFoundCode"></strong> no se encuentra en nuestra base de datos.
+                </p>
+                <button class="btn btn-secondary" onclick="resetSearch()">
+                    Intentar de Nuevo
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Support Section -->
+    <section class="py-16 px-4" style="background: #F5F6F7;">
+        <div class="container mx-auto max-w-4xl text-center">
+            <h3 class="text-2xl font-bold mb-4">¿Necesitas ayuda?</h3>
+            <p class="text-gray-400 mb-6">
+                Contacta a nuestro equipo de soporte para verificaciones adicionales
+            </p>
+            <button class="btn btn-secondary">
+                Contactar Soporte
+            </button>
+            <p class="text-sm text-gray-400 mt-4">
+                nsaauthentication@gmail.com
+            </p>
+        </div>
+    </section>
+
+    <script>
+        // Products Database
+        const productsData = {
+            "products": [
+                {
+                    "id": "1",
+                    "code": "NSA001",
+                    "name": "Billete $100 USD Serie 2009A",
+                    "description": "Billete auténtico de $100 dólares estadounidenses con todas las características de seguridad verificadas por nuestro sistema NSA. Incluye marca de agua, hilo de seguridad y tinta que cambia de color.",
+                    "price": "$100.00 USD",
+                    "status": "Auténtico",
+                    "image": "https://images.unsplash.com/photo-1566105037131-704e69df0e42?w=400&h=300&fit=crop",
+                    "features": [
+                        "Marca de agua Benjamin Franklin",
+                        "Hilo de seguridad azul con texto '100 USA'",
+                        "Tinta que cambia de color en el número 100",
+                        "Papel de algodón auténtico",
+                        "Relieve táctil verificado"
+                    ],
+                    "certificationDate": "15 de Enero, 2024",
+                    "authenticator": "Certificado por NSA Authentication Lab"
+                },
+                {
+                    "id": "2",
+                    "code": "NSA002",
+                    "name": "Carta Pokemon Charizard 1era Edición",
+                    "description": "Carta Pokemon Charizard Base Set de 1era edición en condición mint. Verificada como auténtica con todas las características de impresión originales.",
+                    "price": "$5,000.00 USD",
+                    "status": "Auténtico",
+                    "image": "https://images.unsplash.com/photo-1613771404721-1f92d799e49f?w=400&h=300&fit=crop",
+                    "features": [
+                        "Símbolo de 1era edición presente",
+                        "Colores vibrantes originales",
+                        "Textura de papel correcta",
+                        "Código de barras auténtico",
+                        "Sin signos de reimpresión"
+                    ],
+                    "certificationDate": "10 de Febrero, 2024",
+                    "authenticator": "Certificado por NSA Trading Cards Division"
+                },
+                {
+                    "id": "3",
+                    "code": "NSA003",
+                    "name": "Autógrafo Michael Jordan 1991",
+                    "description": "Autógrafo auténtico de Michael Jordan en fotografía oficial de los Chicago Bulls. Verificado mediante análisis de tinta y comparación con base de datos de autógrafos conocidos.",
+                    "price": "$2,500.00 USD",
+                    "status": "Auténtico",
+                    "image": "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=400&h=300&fit=crop",
+                    "features": [
+                        "Firma manuscrita verificada",
+                        "Tinta original de época",
+                        "Fotografía oficial NBA",
+                        "Certificado de autenticidad incluido",
+                        "Análisis grafológico positivo"
+                    ],
+                    "certificationDate": "5 de Marzo, 2024",
+                    "authenticator": "Certificado por NSA Sports Memorabilia"
+                },
+                {
+                    "id": "4",
+                    "code": "FAKE001",
+                    "name": "Billete Falsificado $100",
+                    "description": "ALERTA: Este billete ha sido identificado como una falsificación. No posee las características de seguridad requeridas y el papel no coincide con los estándares oficiales.",
+                    "price": "Sin valor",
+                    "status": "Falso",
+                    "image": "https://images.unsplash.com/photo-1566105037131-704e69df0e42?w=400&h=300&fit=crop&sat=-100",
+                    "features": [
+                        "Marca de agua ausente o defectuosa",
+                        "Hilo de seguridad falso",
+                        "Tinta de baja calidad",
+                        "Papel incorrecto",
+                        "Relieve táctil inexistente"
+                    ],
+                    "certificationDate": "20 de Enero, 2024",
+                    "authenticator": "Detectado por NSA Anti-Fraud System"
+                }
+            ]
+        };
+
+        let isSearching = false;
+
+        // Toast notification function
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Set search code function
+        function setSearchCode(code) {
+            document.getElementById('searchInput').value = code;
+        }
+
+        // Reset search function
+        function resetSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('notFoundSection').classList.add('hidden');
+        }
+
+        // Search function
+        async function handleSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const searchCode = searchInput.value.trim();
+            
+            if (!searchCode) {
+                showToast('Por favor ingresa un código de producto', 'error');
+                return;
+            }
+
+            if (isSearching) return;
+
+            isSearching = true;
+            const searchBtn = document.getElementById('searchBtn');
+            const searchBtnText = document.getElementById('searchBtnText');
+            
+            searchBtn.disabled = true;
+            searchBtnText.textContent = 'Buscando...';
+            
+            // Simulate search delay
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const product = productsData.products.find(
+                p => p.code.toLowerCase() === searchCode.toLowerCase()
+            );
+            
+            // Hide all sections first
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('notFoundSection').classList.add('hidden');
+            
+            if (product) {
+                showProduct(product);
+                showToast(`Producto ${product.status.toLowerCase()} encontrado`);
+            } else {
+                showNotFound(searchCode);
+                showToast('Código no encontrado en la base de datos', 'error');
+            }
+            
+            isSearching = false;
+            searchBtn.disabled = false;
+            searchBtnText.textContent = 'Verificar';
+        }
+
+        // Show product function
+        function showProduct(product) {
+            const isAuthentic = product.status === 'Auténtico';
+            const statusColor = isAuthentic ? 'green' : 'red';
+            const statusIcon = isAuthentic ? 
+                '<svg class="h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>' :
+                '<svg class="h-12 w-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+
+            const featuresHtml = product.features.map(feature => `
+                <li class="flex items-center space-x-2">
+                    ${isAuthentic ? 
+                        '<svg class="h-4 w-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>' :
+                        '<svg class="h-4 w-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+                    }
+                    <span class="text-sm">${feature}</span>
+                </li>
+            `).join('');
+
+            const alertHtml = !isAuthentic ? `
+                <div class="flex items-center space-x-2 text-red-600 bg-red-900/20 p-3 rounded-lg">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                    <span class="text-sm font-medium">Este producto no es auténtico</span>
+                </div>
+            ` : '';
+
+            const priceHtml = isAuthentic ? `
+                <div class="bg-green-900/20 p-4 rounded-lg">
+                    <div class="text-2xl font-bold text-green-400">${product.price}</div>
+                    <p class="text-sm text-green-500">Valor certificado</p>
+                </div>
+            ` : '';
+
+            document.getElementById('productResult').innerHTML = `
+                <div class="h-2 bg-gradient-to-r ${isAuthentic ? 'from-green-500 to-emerald-500' : 'from-red-500 to-orange-500'}"></div>
+                
+                <div class="text-center p-6 pb-4">
+                    <div class="flex items-center justify-center space-x-3 mb-4">
+                        ${statusIcon}
+                        <div>
+                            <h3 class="text-3xl font-bold">
+                                ${isAuthentic ? 'PRODUCTO AUTÉNTICO' : 'PRODUCTO FALSO'}
+                            </h3>
+                            <p class="text-gray-400">Código: ${product.code}</p>
+                        </div>
+                    </div>
+                    <span class="px-4 py-1 rounded-full text-lg ${isAuthentic ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}">
+                        ${product.status}
+                    </span>
+                </div>
+
+                <div class="p-6 space-y-8">
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div class="space-y-4">
+                            <img 
+                                src="${product.image}" 
+                                alt="${product.name}"
+                                class="w-full h-64 object-cover rounded-lg shadow-lg"
+                            />
+                            ${alertHtml}
+                        </div>
+
+                        <div class="space-y-6">
+                            <div>
+                                <h4 class="text-2xl font-bold mb-2">${product.name}</h4>
+                                <p class="text-gray-400 leading-relaxed">${product.description}</p>
+                            </div>
+
+                            ${priceHtml}
+
+                            <div>
+                                <h5 class="font-semibold mb-3 flex items-center">
+                                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                    Características Verificadas
+                                </h5>
+                                <ul class="space-y-2">
+                                    ${featuresHtml}
+                                </ul>
+                            </div>
+
+                            <div class="border-t border-gray-700 pt-4 space-y-3">
+                                <div class="flex items-center space-x-2 text-sm text-gray-400">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                    <span>Certificado el: ${product.certificationDate}</span>
+                                </div>
+                                <div class="flex items-center space-x-2 text-sm text-gray-400">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    </svg>
+                                    <span>${product.authenticator}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('resultsSection').classList.remove('hidden');
+        }
+
+        // Show not found function
+        function showNotFound(searchCode) {
+            document.getElementById('notFoundCode').textContent = searchCode;
+            document.getElementById('notFoundSection').classList.remove('hidden');
+        }
+
+        // Event listeners
+        document.getElementById('searchBtn').addEventListener('click', handleSearch);
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleSearch();
+            }
+        });
+    </script>
+
+<a id="lovable-badge" target="_blank" href="https://lovable.dev/projects/9f3e67f4-174d-4a50-b707-33d768754ba3?utm_source=lovable-badge">
+	<span style="color: #A1A1AA;">Edit with</span> <svg width="60" height="12" viewBox="0 0 116 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M109.108 21.115C107.649 21.115 106.381 20.8369 105.306 20.2807C104.23 19.7154 103.391 18.8675 102.789 17.7369C102.196 16.6063 101.9 15.2068 101.9 13.5382C101.9 11.9518 102.21 10.5841 102.83 9.4353C103.45 8.27736 104.307 7.3975 105.401 6.79574C106.495 6.19398 107.74 5.89309 109.135 5.89309C110.475 5.89309 111.665 6.18486 112.705 6.76839C113.744 7.35192 114.551 8.19986 115.125 9.31221C115.709 10.4246 116.001 11.7557 116.001 13.3057C116.001 13.8619 115.996 14.3041 115.987 14.6324H105.087V11.7603H113.347L111.788 12.2937C111.788 11.546 111.679 10.9215 111.46 10.42C111.25 9.90941 110.94 9.52647 110.53 9.27118C110.12 9.01588 109.623 8.88824 109.039 8.88824C108.428 8.88824 107.89 9.03868 107.425 9.33956C106.97 9.63133 106.614 10.069 106.359 10.6525C106.112 11.236 105.989 11.9381 105.989 12.7587V14.1674C105.989 15.0062 106.117 15.7174 106.372 16.3009C106.628 16.8844 106.992 17.3266 107.466 17.6275C107.941 17.9193 108.501 18.0651 109.149 18.0651C109.86 18.0651 110.448 17.8828 110.913 17.5181C111.378 17.1443 111.67 16.62 111.788 15.9453H115.932C115.805 17.0029 115.444 17.9193 114.852 18.6943C114.268 19.4693 113.489 20.0665 112.513 20.4859C111.537 20.9053 110.402 21.115 109.108 21.115Z" fill="#FCFBF8"/>
+<path d="M96.5167 1.1061H100.661V20.7181H96.5167V1.1061Z" fill="#FCFBF8"/>
+<path d="M89.4649 21.1148C88.6808 21.1148 87.9788 20.978 87.3588 20.7045C86.7479 20.4309 86.2282 20.0207 85.7996 19.4736C85.3711 18.9174 85.052 18.2336 84.8423 17.4221L85.2799 17.5452V20.7182H81.177V6.28948H85.321V9.51713L84.856 9.59919C85.0657 8.82419 85.3848 8.16316 85.8133 7.6161C86.251 7.05992 86.7844 6.63595 87.4135 6.34419C88.0426 6.04331 88.7492 5.89287 89.5333 5.89287C90.7095 5.89287 91.7307 6.19831 92.5968 6.80919C93.463 7.42007 94.1286 8.29992 94.5936 9.44875C95.0586 10.5885 95.2911 11.9424 95.2911 13.5107C95.2911 15.0698 95.054 16.4237 94.5799 17.5726C94.1058 18.7123 93.4265 19.5876 92.5421 20.1984C91.6668 20.8093 90.6411 21.1148 89.4649 21.1148ZM88.1794 17.9555C88.7994 17.9555 89.3191 17.7732 89.7385 17.4084C90.167 17.0437 90.4861 16.5286 90.6958 15.863C90.9146 15.1974 91.0241 14.4133 91.0241 13.5107C91.0241 12.608 90.9146 11.8239 90.6958 11.1583C90.4861 10.4927 90.167 9.97757 89.7385 9.61286C89.3191 9.23904 88.7994 9.05213 88.1794 9.05213C87.5685 9.05213 87.0442 9.23904 86.6066 9.61286C86.178 9.97757 85.8544 10.4973 85.6355 11.172C85.4167 11.8376 85.3073 12.6171 85.3073 13.5107C85.3073 14.4133 85.4167 15.1974 85.6355 15.863C85.8544 16.5286 86.178 17.0437 86.6066 17.4084C87.0442 17.7732 87.5685 17.9555 88.1794 17.9555ZM81.177 1.1061H85.321V6.28948H81.177V1.1061Z" fill="#FCFBF8"/>
+<path d="M70.7749 21.115C69.8723 21.115 69.0608 20.9372 68.3405 20.5816C67.6293 20.226 67.0686 19.72 66.6583 19.0635C66.2571 18.3979 66.0565 17.6229 66.0565 16.7385C66.0565 15.3891 66.4531 14.3588 67.2464 13.6476C68.0396 12.9274 69.1839 12.4578 70.6792 12.239L73.182 11.8834C73.6834 11.8104 74.08 11.7193 74.3718 11.6099C74.6636 11.5004 74.8778 11.3546 75.0146 11.1722C75.1514 10.9807 75.2197 10.7391 75.2197 10.4474C75.2197 10.1465 75.1377 9.87294 74.9736 9.62677C74.8186 9.37147 74.5815 9.17088 74.2624 9.025C73.9524 8.87 73.574 8.7925 73.1272 8.7925C72.4161 8.7925 71.8462 8.97941 71.4177 9.35324C70.9892 9.71794 70.7567 10.2194 70.7202 10.8576H66.4395C66.4759 9.89118 66.7677 9.03412 67.3148 8.28647C67.8709 7.52971 68.6414 6.94162 69.6261 6.52221C70.6108 6.1028 71.7505 5.89309 73.0452 5.89309C74.4037 5.89309 75.5525 6.11648 76.4917 6.56324C77.4308 7.00089 78.1374 7.63 78.6115 8.45059C79.0947 9.27118 79.3364 10.2513 79.3364 11.391V17.4087C79.3364 18.056 79.382 18.6578 79.4731 19.214C79.5734 19.761 79.7147 20.1075 79.8971 20.2534V20.7184H75.589C75.4887 20.3263 75.4112 19.8841 75.3565 19.3918C75.3018 18.8994 75.2699 18.3797 75.2608 17.8326L75.9309 17.5454C75.7577 18.1928 75.4386 18.79 74.9736 19.3371C74.5177 19.875 73.9296 20.3081 73.2093 20.6363C72.4981 20.9554 71.6867 21.115 70.7749 21.115ZM72.3067 18.0788C72.8902 18.0788 73.4053 17.9512 73.8521 17.6959C74.2989 17.4315 74.6408 17.0668 74.8778 16.6018C75.124 16.1368 75.2471 15.6079 75.2471 15.0153V13.1279L75.589 13.3194C75.3702 13.6112 75.0967 13.8346 74.7684 13.9896C74.4493 14.1446 74.0162 14.2768 73.4692 14.3862L72.4161 14.5913C71.714 14.7281 71.1852 14.9378 70.8296 15.2204C70.4831 15.5031 70.3099 15.8997 70.3099 16.4103C70.3099 16.9209 70.4968 17.3266 70.8706 17.6275C71.2445 17.9284 71.7231 18.0788 72.3067 18.0788Z" fill="#FCFBF8"/>
+<path d="M51.962 6.28958H56.3659L60.1542 18.6668H58.8276L62.4656 6.28958H66.7463L61.7544 20.7182H57.1454L51.962 6.28958Z" fill="#FCFBF8"/>
+<path d="M45.4846 21.115C44.0531 21.115 42.7949 20.805 41.7099 20.185C40.634 19.565 39.7997 18.6806 39.2071 17.5318C38.6236 16.3829 38.3318 15.0381 38.3318 13.4972C38.3318 11.9563 38.6236 10.616 39.2071 9.47633C39.7997 8.3275 40.634 7.44309 41.7099 6.82309C42.7949 6.20309 44.0531 5.89309 45.4846 5.89309C46.916 5.89309 48.1697 6.20309 49.2456 6.82309C50.3215 7.44309 51.1512 8.3275 51.7347 9.47633C52.3274 10.616 52.6237 11.9563 52.6237 13.4972C52.6237 15.0381 52.3274 16.3829 51.7347 17.5318C51.1512 18.6806 50.3215 19.565 49.2456 20.185C48.1697 20.805 46.916 21.115 45.4846 21.115ZM45.4846 17.9421C46.0863 17.9421 46.6015 17.7779 47.03 17.4497C47.4585 17.1123 47.7868 16.6154 48.0147 15.959C48.2427 15.2934 48.3566 14.4728 48.3566 13.4972C48.3566 12.0475 48.1059 10.9488 47.6044 10.2012C47.103 9.44441 46.3963 9.06603 45.4846 9.06603C44.8828 9.06603 44.3631 9.23471 43.9255 9.57206C43.4969 9.9003 43.1687 10.3972 42.9408 11.0628C42.7128 11.7193 42.5988 12.5307 42.5988 13.4972C42.5988 14.4637 42.7128 15.2797 42.9408 15.9453C43.1687 16.6109 43.4969 17.1123 43.9255 17.4497C44.3631 17.7779 44.8828 17.9421 45.4846 17.9421Z" fill="#FCFBF8"/>
+<path d="M26.2195 1.10631H30.514V17.6623L29.7481 16.7734C29.7481 16.7734 31.8751 16.7734 35.534 16.7734C39.1928 16.7734 38.6925 20.7184 38.6925 20.7184H26.2195V1.10631Z" fill="#FCFBF8"/>
+<mask id="mask0_19703_15608" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="21">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M5.90405 0.885124C9.16477 0.885124 11.8081 3.53543 11.8081 6.80474V9.05456H13.773C17.0337 9.05456 19.677 11.7049 19.677 14.9742C19.677 18.2435 17.0337 20.8938 13.773 20.8938H0V6.80474C0 3.53543 2.64333 0.885124 5.90405 0.885124Z" fill="url(#paint0_linear_19703_15608)"/>
+</mask>
+<g mask="url(#mask0_19703_15608)">
+<g filter="url(#filter0_f_19703_15608)">
+<circle cx="8.63157" cy="11.5658" r="13.3199" fill="#4B73FF"/>
+</g>
+<g filter="url(#filter1_f_19703_15608)">
+<ellipse cx="10.0949" cy="4.25612" rx="17.0591" ry="13.3199" fill="#FF66F4"/>
+</g>
+<g filter="url(#filter2_f_19703_15608)">
+<ellipse cx="12.8775" cy="1.74957" rx="13.3199" ry="11.6977" fill="#FF0105"/>
+</g>
+<g filter="url(#filter3_f_19703_15608)">
+<circle cx="10.3319" cy="4.25254" r="8.01052" fill="#FE7B02"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_f_19703_15608" x="-10.6577" y="-7.72354" width="38.5786" height="38.5786" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="2.98472" result="effect1_foregroundBlur_19703_15608"/>
+</filter>
+<filter id="filter1_f_19703_15608" x="-12.9337" y="-15.0332" width="46.057" height="38.5786" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="2.98472" result="effect1_foregroundBlur_19703_15608"/>
+</filter>
+<filter id="filter2_f_19703_15608" x="-6.41182" y="-15.9176" width="38.5786" height="35.3342" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="2.98472" result="effect1_foregroundBlur_19703_15608"/>
+</filter>
+<filter id="filter3_f_19703_15608" x="-3.64803" y="-9.72742" width="27.9599" height="27.9599" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="2.98472" result="effect1_foregroundBlur_19703_15608"/>
+</filter>
+<linearGradient id="paint0_linear_19703_15608" x1="6.62168" y1="4.40129" x2="12.6165" y2="20.8863" gradientUnits="userSpaceOnUse">
+<stop offset="0.025" stop-color="#FF8E63"/>
+<stop offset="0.56" stop-color="#FF7EB0"/>
+<stop offset="0.95" stop-color="#4B73FF"/>
+</linearGradient>
+</defs>
+</svg>
+
+
+	<button id="lovable-badge-close" style="position: absolute; top: -2px; right: 5px; cursor: pointer; font-size: 14px; color: #A1A1AA;">&times;</button>
+</a>
+<script>
+	// Don't show the lovable-badge if the page is in an iframe or if it's being rendered by puppeteer (screenshot service)
+	if (window.self !== window.top || navigator.userAgent.includes('puppeteer')) {
+		// the page is in an iframe
+		var badge = document.getElementById('lovable-badge');
+		if (badge) {
+			badge.style.display = 'none';
+		}
+	}
+
+	// Add click event listener to close button
+	var closeButton = document.getElementById('lovable-badge-close');
+	if (closeButton) {
+		closeButton.addEventListener('click', function(event) {
+			event.preventDefault();
+			event.stopPropagation();
+			var badge = document.getElementById('lovable-badge');
+			if (badge) {
+				badge.style.display = 'none';
+			}
+		});
+	}
+</script>
+</body>
+</html>

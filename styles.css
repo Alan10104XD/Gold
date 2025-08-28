@@ -1,0 +1,55 @@
+
+.container header {
+    background-color: #2b2828;
+    padding: 100px;
+    border-bottom: 1px solid #ccc;
+    color: white;
+}
+
+input[type="text"] {
+    padding: 10px;
+    width: 500px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+button[type="submit"] {
+    padding: 10px 20px;
+    background-color: #333333;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.top {
+    margin: 30px;
+}
+.logo {
+    width: 150px;
+    display: flex;
+    margin-left: 100px;
+}
+.header-content {
+    display: flex;
+    flex-direction: column;
+
+
+}
+.header-content h1 {
+    font-weight: 700;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 4em;
+}
+.header-content p {
+    margin: 20px;
+    font-size: 1.2em;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    align-self: center;
+}
+.buscar_codigo {
+    padding: 10px;
+    margin-top: 10px;
+    align-self: center;
+    display: flex;
+    gap: 2px;
+    justify-content: center;
+}
