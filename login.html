@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Gold Authentication</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: url('https://www.kopa.com.co/images/articulos/Insights-Panini-album2.jpg') no-repeat center center fixed;
+            background-size: cover;
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+        }
+        
+        .login-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(200,200,200,0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-1px);
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #E5E7EB;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #10B981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            color: white;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .toast-success {
+            background: #10B981;
+        }
+        
+        .toast-error {
+            background: #EF4444;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <!-- Header con logo -->
+    <div class="absolute top-0 left-0 right-0 backdrop-blur-sm border-b" style="background: #FFFFFF; border-bottom: 1px solid rgba(255,255,255,0.2);">
+        <div class="container mx-auto px-4 py-6 flex justify-center">
+            <img src="/image/logo.PNG" alt="Logo Gold Authentication" class="w-48 max-w-full h-auto" />
+        </div>
+    </div>
+
+    <!-- Formulario de login -->
+    <div class="login-card w-full max-w-md p-8 mt-24">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Iniciar sesión</h2>
+            <p class="text-gray-600">Accede al panel de administración</p>
+        </div>
+        
+        <form id="loginForm" class="space-y-6">
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Usuario</label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    name="username"
+                    placeholder="Ingresa tu usuario"
+                    class="input-field"
+                    required
+                />
+            </div>
+            
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password"
+                    placeholder="Ingresa tu contraseña"
+                    class="input-field"
+                    required
+                />
+            </div>
+            
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <input 
+                        id="remember" 
+                        name="remember" 
+                        type="checkbox" 
+                        class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    />
+                    <label for="remember" class="ml-2 block text-sm text-gray-700">
+                        Recordarme
+                    </label>
+                </div>
+                
+            </div>
+            
+            <button 
+                type="submit" 
+                id="loginBtn"
+                class="btn btn-primary w-full text-lg"
+            >
+                <span id="loginBtnText">Iniciar sesión</span>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // Credenciales de ejemplo (en producción esto debe estar en el servidor)
+        const validCredentials = {
+            username: 'admin',
+            password: 'gold2024'
+        };
+
+        // Función para mostrar notificaciones
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Función para cerrar sesión automáticamente
+        function setupAutoLogout() {
+            // Cerrar sesión cuando se cierre la ventana/pestaña
+            window.addEventListener('beforeunload', function() {
+                localStorage.removeItem('goldAuth');
+                localStorage.removeItem('goldUser');
+            });
+
+            // Cerrar sesión cuando se pierde el foco de la ventana por más de 5 minutos
+            let inactivityTimer;
+            
+            function resetInactivityTimer() {
+                clearTimeout(inactivityTimer);
+                inactivityTimer = setTimeout(() => {
+                    localStorage.removeItem('goldAuth');
+                    localStorage.removeItem('goldUser');
+                    showToast('Sesión cerrada por inactividad', 'error');
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 2000);
+                }, 300000); // 5 minutos
+            }
+
+            // Eventos que resetean el timer de inactividad
+            ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(event => {
+                document.addEventListener(event, resetInactivityTimer, true);
+            });
+
+            // Iniciar el timer
+            resetInactivityTimer();
+        }
+
+        // Manejar el formulario de login
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const loginBtnText = document.getElementById('loginBtnText');
+            
+            if (!username || !password) {
+                showToast('Por favor completa todos los campos', 'error');
+                return;
+            }
+            
+            // Deshabilitar botón durante el login
+            loginBtn.disabled = true;
+            loginBtnText.textContent = 'Iniciando sesión...';
+            
+            // Simular delay de autenticación
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Verificar credenciales
+            if (username === validCredentials.username && password === validCredentials.password) {
+                showToast('¡Inicio de sesión exitoso!', 'success');
+                
+                // Guardar sesión en localStorage con timestamp
+                localStorage.setItem('goldAuth', 'true');
+                localStorage.setItem('goldUser', username);
+                localStorage.setItem('goldAuthTime', Date.now().toString());
+                
+                // Redirigir al CRUD después de un breve delay
+                setTimeout(() => {
+                    window.location.href = 'crud.html';
+                }, 1500);
+            } else {
+                showToast('Usuario o contraseña incorrectos', 'error');
+                
+                // Restablecer botón
+                loginBtn.disabled = false;
+                loginBtnText.textContent = 'Iniciar Sesión';
+                
+                // Limpiar formulario
+                document.getElementById('password').value = '';
+            }
+        });
+
+        // Verificar si ya está autenticado y la sesión es válida
+        function checkAuthStatus() {
+            const isAuth = localStorage.getItem('goldAuth') === 'true';
+            const authTime = localStorage.getItem('goldAuthTime');
+            
+            if (isAuth && authTime) {
+                const sessionAge = Date.now() - parseInt(authTime);
+                const maxSessionAge = 24 * 60 * 60 * 1000; // 24 horas
+                
+                if (sessionAge < maxSessionAge) {
+                    window.location.href = 'crud.html';
+                } else {
+                    // Sesión expirada
+                    localStorage.removeItem('goldAuth');
+                    localStorage.removeItem('goldUser');
+                    localStorage.removeItem('goldAuthTime');
+                    showToast('Sesión expirada. Por favor inicia sesión nuevamente.', 'error');
+                }
+            }
+        }
+
+        // Ejecutar verificación al cargar la página
+        checkAuthStatus();
+        
+        // Configurar cierre automático cuando esté autenticado
+        if (localStorage.getItem('goldAuth') === 'true') {
+            setupAutoLogout();
+        }
+    </script>
+</body>
+</html>

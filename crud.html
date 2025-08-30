@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD Productos - Gold Authentication</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: url('https://www.kopa.com.co/images/articulos/Insights-Panini-album2.jpg') no-repeat center center fixed;
+            background-size: cover;
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+        .card {
+            background: rgba(255,255,255,0.85);
+            border-radius: 1rem;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            border: 1px solid rgba(200,200,200,0.3);
+        }
+        
+        /* Estilos para tabla */
+        .table-container {
+            background: white;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid #E5E7EB;
+            overflow-x: auto; /* Scroll horizontal */
+        }
+        
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 900px; /* Ancho mínimo para forzar scroll en móviles */
+        }
+        
+        .custom-table th {
+            background: linear-gradient(135deg, #1F2937, #374151);
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.875rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            border-bottom: 2px solid #10B981;
+            white-space: nowrap; /* Evita que el texto del header se divida */
+        }
+        
+        .custom-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #F3F4F6;
+            vertical-align: top;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 0;
+        }
+        
+        .custom-table tr:hover {
+            background: linear-gradient(135deg, #F8FAFC, #F1F5F9);
+            transition: all 0.2s ease;
+        }
+        
+        .custom-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        /* Ajustes específicos para columnas */
+        .custom-table th:nth-child(1),
+        .custom-table td:nth-child(1) {
+            width: 10%;
+            min-width: 100px;
+        }
+        
+        .custom-table th:nth-child(2),
+        .custom-table td:nth-child(2) {
+            width: 15%;
+            min-width: 150px;
+        }
+        
+        .custom-table th:nth-child(3),
+        .custom-table td:nth-child(3) {
+            width: 10%;
+            min-width: 80px;
+        }
+        
+        .custom-table th:nth-child(4),
+        .custom-table td:nth-child(4) {
+            width: 25%;
+            min-width: 200px;
+        }
+        
+        .custom-table th:nth-child(5),
+        .custom-table td:nth-child(5) {
+            width: 20%;
+            min-width: 150px;
+        }
+        
+        .custom-table th:nth-child(6),
+        .custom-table td:nth-child(6) {
+            width: 10%;
+            min-width: 120px;
+        }
+        
+        .custom-table th:nth-child(7),
+        .custom-table td:nth-child(7) {
+            width: 10%;
+            min-width: 150px;
+        }
+        
+        .product-name {
+            font-weight: 600;
+            color: #1F2937;
+            margin-bottom: 0.5rem;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 200px;
+        }
+
+        .product-image {
+            border-radius: 0.5rem;
+            border: 2px solid #E5E7EB;
+            transition: transform 0.2s ease;
+        }
+        
+        .product-image:hover {
+            transform: scale(1.05);
+            border-color: #10B981;
+        }
+        
+        .image-count {
+            background: #10B981;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .product-code {
+            font-family: 'Courier New', monospace;
+            background: #F3F4F6;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            color: #374151;
+            border-left: 3px solid #10B981;
+        }
+        
+        .product-price {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #059669;
+            white-space: nowrap; /* Evita que el precio se divida */
+        }
+        
+        .product-description {
+            color: #6B7280;
+            line-height: 1.5;
+            max-width: 250px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
+        
+        .product-features {
+            max-width: 200px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
+        
+        .feature-tag {
+            background: #EBF8FF;
+            color: #1E40AF;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            margin: 0.125rem;
+            display: inline-block;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100px;
+        }
+        
+        .certification-date {
+            background: #FEF3C7;
+            color: #92400E;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            text-align: center;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: nowrap; /* Evita que la fecha se divida */
+        }
+        
+        .actions-cell {
+            min-width: 150px;
+            white-space: nowrap; /* Evita que los botones se dividan */
+        }
+        
+        /* Indicador de scroll para móviles */
+        .scroll-indicator {
+            display: none;
+            background: linear-gradient(90deg, #10B981, #059669);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            animation: fadeInOut 3s ease-in-out;
+        }
+        
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+        
+        /* Responsive table */
+        @media (max-width: 768px) {
+            .scroll-indicator {
+                display: block;
+            }
+            
+            .table-container {
+                /* Asegurar scroll horizontal en móviles */
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+                border-radius: 1rem; /* Mantener bordes redondeados en móviles */
+            }
+            
+            .custom-table {
+                min-width: 1000px; /* Aumentar ancho mínimo en móviles */
+            }
+            
+            .custom-table th,
+            .custom-table td {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.875rem;
+            }
+            
+            .product-description,
+            .product-features {
+                max-width: 180px; /* Reducir en móviles pero mantener legible */
+            }
+            
+            .product-name {
+                max-width: 120px;
+            }
+            
+            .feature-tag {
+                max-width: 80px;
+            }
+            
+            /* Botones más pequeños en móviles */
+            .btn-sm {
+                padding: 0.375rem 0.75rem;
+                font-size: 0.7rem;
+            }
+            
+            /* Hacer la columna de acciones más compacta */
+            .actions-cell {
+                min-width: 120px;
+            }
+            
+            .actions-cell .flex {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+        }
+        
+        /* Para pantallas muy pequeñas */
+        @media (max-width: 480px) {
+            .custom-table {
+                min-width: 1100px; /* Aún más ancho para forzar scroll */
+            }
+            
+            .table-container {
+                margin: 0 -1rem; /* Expandir el contenedor */
+                border-radius: 0.5rem; /* Mantener bordes redondeados incluso al expandir */
+            }
+            
+            .scroll-indicator {
+                margin: 0 1rem 1rem 1rem;
+                border-radius: 0.5rem;
+            }
+        }
+        
+        /* Estilo para la barra de scroll horizontal */
+        .table-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .table-container::-webkit-scrollbar-track {
+            background: #F3F4F6;
+            border-radius: 4px;
+        }
+        
+        .table-container::-webkit-scrollbar-thumb {
+            background: #10B981;
+            border-radius: 4px;
+        }
+        
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #059669;
+        }
+        
+        /* Estilos para botones */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #3B82F6, #2563EB);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #2563EB, #1D4ED8);
+        }
+        
+        .btn-error {
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+            color: white;
+        }
+        
+        .btn-error:hover {
+            background: linear-gradient(135deg, #DC2626, #B91C1C);
+        }
+        
+        .btn-add {
+            background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+            color: white;
+        }
+        
+        .btn-add:hover {
+            background: linear-gradient(135deg, #7C3AED, #6D28D9);
+        }
+        
+        /* Botones pequeños para tabla */
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            border-radius: 0.375rem;
+        }
+        
+        /* Modal personalizado */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-width: 400px;
+            width: 90%;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .modal-icon {
+            width: 48px;
+            height: 48px;
+            background: #FEE2E2;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+        
+        .btn-danger {
+            background: #DC2626;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .btn-danger:hover {
+            background: #B91C1C;
+            transform: translateY(-1px);
+        }
+        
+        .btn-cancel {
+            background: #F3F4F6;
+            color: #374151;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .btn-cancel:hover {
+            background: #E5E7EB;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-black">
+    <header class="backdrop-blur-sm border-b mb-8" style="background: #FFFFFF; border-bottom: 1px solid #E5E7EB;">
+        <div class="container mx-auto px-4 py-6 flex justify-center">
+            <img src="/image/logo.PNG" alt="Logo Gold Authentication" class="w-64 max-w-full h-auto mx-auto" />
+        </div>
+    </header>
+    <main class="container mx-auto px-4">
+        <div class="card p-8 mb-8">
+            <h2 class="text-3xl font-bold mb-6 text-center">CRUD de Productos</h2>
+            <form id="productForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div>
+                    <label class="block font-semibold mb-2">Código</label>
+                    <input type="text" id="code" class="w-full px-4 py-2 border rounded-lg" required />
+                </div>
+                <div>
+                    <label class="block font-semibold mb-2">Nombre</label>
+                    <input type="text" id="name" class="w-full px-4 py-2 border rounded-lg" required />
+                </div>
+                <div>
+                    <label class="block font-semibold mb-2">Descripción</label>
+                    <textarea id="description" class="w-full px-4 py-2 border rounded-lg" rows="2" required></textarea>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-2">Precio</label>
+                    <input type="text" id="price" class="w-full px-4 py-2 border rounded-lg" required />
+                </div>
+                <div>
+                    <label class="block font-semibold mb-2">Estado</label>
+                    <select id="status" class="w-full px-4 py-2 border rounded-lg">
+                        <option value="Auténtico">Auténtico</option>
+                        <option value="Falso">Falso</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-2">Imágenes del Producto</label>
+                    <div id="imagesContainer">
+                        <div class="image-input-group mb-2">
+                            <div class="flex items-center gap-2 mb-2">
+                                <input type="text" class="image-url w-full border p-2 rounded" placeholder="URL de la imagen" oninput="showImagePreviews()" />
+                                <button type="button" onclick="removeImageInput(this)" class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600">×</button>
+                            </div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <input type="file" class="image-file w-full border p-2 rounded" accept="image/*" onchange="handleFileUpload(this)" />
+                                <button type="button" onclick="clearFileInput(this)" class="bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600">Limpiar</button>
+                            </div>
+                            <div class="image-preview mt-2"></div>
+                        </div>
+                    </div>
+                    <button type="button" onclick="addImageInput()" class="btn btn-add btn-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Agregar otra imagen
+                    </button>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block font-semibold mb-2">Características (separadas por coma)</label>
+                    <input type="text" id="features" class="w-full px-4 py-2 border rounded-lg" />
+                </div>
+                <div>
+                    <label class="block font-semibold mb-2">Fecha de Certificación</label>
+                    <input type="text" id="certificationDate" class="w-full px-4 py-2 border rounded-lg" />
+                </div>
+                <div>
+                    <label class="block font-semibold mb-2">Certificador</label>
+                    <input type="text" id="authenticator" class="w-full px-4 py-2 border rounded-lg" />
+                </div>
+                <div class="md:col-span-2 flex justify-end">
+                    <button type="submit" class="btn btn-primary">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Agregar
+                    </button>
+                </div>
+            </form>
+            <input id="searchInput" placeholder="Buscar por nombre o código..." class="w-full p-3 border border-gray-300 rounded-lg shadow-sm" type="text" oninput="filterProducts()">
+            <br>
+            <br>
+            <div class="scroll-indicator">
+                👆 Desliza horizontalmente para ver todas las columnas
+            </div>
+            <div class="table-container">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Producto</th>
+                            <th>Precio</th>
+                            <th>Descripción</th>
+                            <th>Características</th>
+                            <th>Fecha Certificación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsTable">
+                        <!-- Productos renderizados aquí -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    <script>
+        let products = [];
+        let editIndex = null;
+        let filteredProducts = [];
+
+        // Función para manejar la carga de archivos
+        function handleFileUpload(fileInput) {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            // Validar tipo de archivo
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                alert('Por favor selecciona un archivo de imagen válido (JPEG, PNG, GIF, WebP)');
+                fileInput.value = '';
+                return;
+            }
+
+            // Validar tamaño (máximo 5MB)
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            if (file.size > maxSize) {
+                alert('El archivo es demasiado grande. El tamaño máximo es 5MB');
+                fileInput.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageData = e.target.result;
+                const group = fileInput.closest('.image-input-group');
+                const urlInput = group.querySelector('.image-url');
+                const preview = group.querySelector('.image-preview');
+                
+                // Establecer la imagen en base64 en el input URL
+                urlInput.value = imageData;
+                
+                // Mostrar vista previa
+                preview.innerHTML = `
+                    <div class="relative">
+                        <img src="${imageData}" alt="Vista previa" class="w-32 h-24 object-cover border rounded shadow" />
+                        <div class="absolute top-1 right-1 bg-green-500 text-white text-xs px-2 py-1 rounded">
+                            Archivo Local
+                        </div>
+                    </div>
+                `;
+            };
+            
+            reader.onerror = function() {
+                alert('Error al cargar el archivo');
+                fileInput.value = '';
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        // Función para limpiar el input de archivo
+        function clearFileInput(button) {
+            const group = button.closest('.image-input-group');
+            const fileInput = group.querySelector('.image-file');
+            const urlInput = group.querySelector('.image-url');
+            const preview = group.querySelector('.image-preview');
+            
+            fileInput.value = '';
+            urlInput.value = '';
+            preview.innerHTML = '';
+        }
+
+        function showImagePreviews() {
+            const imageGroups = document.querySelectorAll('.image-input-group');
+            imageGroups.forEach(group => {
+                const urlInput = group.querySelector('.image-url');
+                const fileInput = group.querySelector('.image-file');
+                const preview = group.querySelector('.image-preview');
+                const url = urlInput.value.trim();
+                
+                // Solo mostrar vista previa si no hay archivo cargado y hay URL
+                if (!fileInput.files[0] && url) {
+                    if (url.startsWith('data:image/')) {
+                        // Es una imagen en base64 (archivo local)
+                        preview.innerHTML = `
+                            <div class="relative">
+                                <img src="${url}" alt="Vista previa" class="w-32 h-24 object-cover border rounded shadow" />
+                                <div class="absolute top-1 right-1 bg-green-500 text-white text-xs px-2 py-1 rounded">
+                                    Archivo Local
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // Es una URL externa
+                        preview.innerHTML = `
+                            <div class="relative">
+                                <img src="${url}" alt="Vista previa" class="w-32 h-24 object-cover border rounded shadow" />
+                                <div class="absolute top-1 right-1 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                                    URL Externa
+                                </div>
+                            </div>
+                        `;
+                    }
+                } else if (!fileInput.files[0] && !url) {
+                    preview.innerHTML = '';
+                }
+            });
+        }
+
+        function addImageInput() {
+            const container = document.getElementById('imagesContainer');
+            const newGroup = document.createElement('div');
+            newGroup.className = 'image-input-group mb-2';
+            newGroup.innerHTML = `
+                <div class="flex items-center gap-2 mb-2">
+                    <input type="text" class="image-url w-full border p-2 rounded" placeholder="URL de la imagen" oninput="showImagePreviews()" />
+                    <button type="button" onclick="removeImageInput(this)" class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600">×</button>
+                </div>
+                <div class="flex items-center gap-2 mb-2">
+                    <input type="file" class="image-file w-full border p-2 rounded" accept="image/*" onchange="handleFileUpload(this)" />
+                    <button type="button" onclick="clearFileInput(this)" class="bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600">Limpiar</button>
+                </div>
+                <div class="image-preview mt-2"></div>
+            `;
+            container.appendChild(newGroup);
+        }
+
+        function removeImageInput(button) {
+            const container = document.getElementById('imagesContainer');
+            if(container.children.length > 1) {
+                button.closest('.image-input-group').remove();
+            }
+        }
+
+        function getImageUrls() {
+            const inputs = document.querySelectorAll('.image-url');
+            const urls = [];
+            inputs.forEach(input => {
+                if(input.value.trim()) {
+                    urls.push(input.value.trim());
+                }
+            });
+            return urls;
+        }
+
+        function setImageUrls(urls) {
+            const container = document.getElementById('imagesContainer');
+            container.innerHTML = '';
+            
+            if(urls.length === 0) {
+                addImageInput();
+                return;
+            }
+
+            urls.forEach(url => {
+                const newGroup = document.createElement('div');
+                newGroup.className = 'image-input-group mb-2';
+                newGroup.innerHTML = `
+                    <div class="flex items-center gap-2 mb-2">
+                        <input type="text" class="image-url w-full border p-2 rounded" placeholder="URL de la imagen" value="${url}" oninput="showImagePreviews()" />
+                        <button type="button" onclick="removeImageInput(this)" class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600">×</button>
+                    </div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <input type="file" class="image-file w-full border p-2 rounded" accept="image/*" onchange="handleFileUpload(this)" />
+                        <button type="button" onclick="clearFileInput(this)" class="bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600">Limpiar</button>
+                    </div>
+                    <div class="image-preview mt-2"></div>
+                `;
+                container.appendChild(newGroup);
+            });
+            showImagePreviews();
+        }
+
+        // Función para comprimir imagen (opcional)
+        function compressImage(file, maxWidth = 800, quality = 0.8) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                
+                img.onload = function() {
+                    const ratio = Math.min(maxWidth / img.width, maxWidth / img.height);
+                    canvas.width = img.width * ratio;
+                    canvas.height = img.height * ratio;
+                    
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob(resolve, 'image/jpeg', quality);
+                };
+                
+                img.src = URL.createObjectURL(file);
+            });
+        }
+
+        function filterProducts() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            
+            if (searchTerm === '') {
+                filteredProducts = [...products];
+            } else {
+                filteredProducts = products.filter(product => {
+                    const nameMatch = product.name.toLowerCase().includes(searchTerm);
+                    const codeMatch = product.code.toLowerCase().includes(searchTerm);
+                    return nameMatch || codeMatch;
+                });
+            }
+            renderProducts();
+        }
+
+        function showCustomConfirm(message, onConfirm) {
+            const modalHTML = `
+                <div class="modal-overlay" id="customModal">
+                    <div class="modal-content">
+                        <div class="modal-icon">
+                            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 text-center mb-2">¿Estás seguro?</h3>
+                        <p class="text-gray-600 text-center mb-6">${message}</p>
+                        <div class="flex gap-3 justify-center">
+                            <button class="btn-cancel" onclick="closeCustomModal()">Cancelar</button>
+                            <button class="btn-danger" onclick="confirmAction()">Eliminar</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            window.confirmAction = function() {
+                onConfirm();
+                closeCustomModal();
+            };
+        }
+
+        function closeCustomModal() {
+            const modal = document.getElementById('customModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function renderProducts() {
+            const tbody = document.getElementById('productsTable');
+            tbody.innerHTML = '';
+            const productsToShow = filteredProducts.length > 0 || document.getElementById('searchInput').value.trim() !== '' ? filteredProducts : products;
+            
+            productsToShow.forEach((p, i) => {
+                const originalIndex = products.indexOf(p);
+                const mainImage = p.images && p.images.length > 0 ? p.images[0] : '';
+                const imageCount = p.images ? p.images.length : 0;
+                const features = p.features && p.features.length > 0 ? p.features : [];
+                
+                const featureTags = features.map(feature => 
+                    `<span class="feature-tag">${feature.trim()}</span>`
+                ).join('');
+                
+                // Detectar si la imagen es local o externa
+                const imageSource = mainImage.startsWith('data:image/') ? 'local' : 'externa';
+                const imageIndicator = mainImage ? (imageSource === 'local' ? '📁' : '🌐') : '';
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td>
+                            <div class="product-code">${p.code}</div>
+                        </td>
+                        <td>
+                            <div>
+                                <div class="product-name">${p.name}</div>
+                                ${mainImage ? `<img src="${mainImage}" alt="${p.name}" class="product-image w-20 h-16 object-cover" title="Imagen ${imageSource}" />` : '<div class="w-20 h-16 bg-gray-200 rounded flex items-center justify-center text-gray-500 text-xs">Sin imagen</div>'}
+                                ${imageCount > 0 ? `<div class="image-count mt-2">${imageIndicator} ${imageCount} imagen${imageCount !== 1 ? 'es' : ''}</div>` : ''}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="product-price">$${p.price}</div>
+                        </td>
+                        <td>
+                            <div class="product-description">${p.description}</div>
+                        </td>
+                        <td>
+                            <div class="product-features">
+                                ${featureTags || '<span class="text-gray-400 italic">Sin características</span>'}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="certification-date">
+                                ${p.certificationDate || '<span class="text-gray-400">No certificado</span>'}
+                            </div>
+                        </td>
+                        <td class="actions-cell">
+                            <div class="flex gap-2 flex-wrap">
+                                <button onclick="editProduct(${originalIndex})" class="btn btn-secondary btn-sm">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                    Editar
+                                </button>
+                                <button onclick="deleteProduct(${originalIndex})" class="btn btn-error btn-sm">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                    Eliminar
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        document.getElementById('productForm').onsubmit = function(e) {
+            e.preventDefault();
+            const product = {
+                code: document.getElementById('code').value,
+                name: document.getElementById('name').value,
+                description: document.getElementById('description').value,
+                price: document.getElementById('price').value,
+                status: document.getElementById('status').value,
+                images: getImageUrls(),
+                features: document.getElementById('features').value.split(',').map(f => f.trim()),
+                certificationDate: document.getElementById('certificationDate').value,
+                authenticator: document.getElementById('authenticator').value
+            };
+            
+            if(editIndex !== null) {
+                products[editIndex] = product;
+                editIndex = null;
+                const submitBtn = document.querySelector('button[type="submit"]');
+                submitBtn.innerHTML = `
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Agregar
+                `;
+            } else {
+                products.push(product);
+            }
+            filteredProducts = [...products];
+            renderProducts();
+            this.reset();
+            setImageUrls([]);
+        };
+
+        window.editProduct = function(i) {
+            const p = products[i];
+            document.getElementById('code').value = p.code;
+            document.getElementById('name').value = p.name;
+            document.getElementById('description').value = p.description;
+            document.getElementById('price').value = p.price;
+            document.getElementById('status').value = p.status;
+            setImageUrls(p.images || []);
+            document.getElementById('features').value = p.features.join(', ');
+            document.getElementById('certificationDate').value = p.certificationDate;
+            document.getElementById('authenticator').value = p.authenticator;
+            editIndex = i;
+            const submitBtn = document.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = `
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Actualizar
+            `;
+        };
+
+        window.deleteProduct = function(i) {
+            const productName = products[i].name;
+            showCustomConfirm(
+                `Esta acción eliminará permanentemente el producto "${productName}" y no se puede deshacer.`,
+                function() {
+                    products.splice(i, 1);
+                    filteredProducts = [...products];
+                    renderProducts();
+                }
+            );
+        };
+
+        // Función para cerrar sesión
+        function logout() {
+            showCustomConfirm(
+                '¿Estás seguro de que quieres cerrar sesión?',
+                function() {
+                    localStorage.removeItem('goldAuth');
+                    localStorage.removeItem('goldUser');
+                    localStorage.removeItem('goldAuthTime');
+                    window.location.href = 'login.html';
+                }
+            );
+        }
+
+        // Función para verificar autenticación
+        function checkAuth() {
+            const isAuth = localStorage.getItem('goldAuth') === 'true';
+            const authTime = localStorage.getItem('goldAuthTime');
+            
+            if (!isAuth || !authTime) {
+                window.location.href = 'login.html';
+                return false;
+            }
+            
+            const sessionAge = Date.now() - parseInt(authTime);
+            const maxSessionAge = 24 * 60 * 60 * 1000; // 24 horas
+            
+            if (sessionAge >= maxSessionAge) {
+                localStorage.removeItem('goldAuth');
+                localStorage.removeItem('goldUser');
+                localStorage.removeItem('goldAuthTime');
+                window.location.href = 'login.html';
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Configurar cierre automático de sesión
+        function setupAutoLogout() {
+            window.addEventListener('beforeunload', function() {
+                localStorage.removeItem('goldAuth');
+                localStorage.removeItem('goldUser');
+                localStorage.removeItem('goldAuthTime');
+            });
+
+            let inactivityTimer;
+            
+            function resetInactivityTimer() {
+                clearTimeout(inactivityTimer);
+                inactivityTimer = setTimeout(() => {
+                    localStorage.removeItem('goldAuth');
+                    localStorage.removeItem('goldUser');
+                    localStorage.removeItem('goldAuthTime');
+                    alert('Sesión cerrada por inactividad');
+                    window.location.href = 'login.html';
+                }, 300000); // 5 minutos
+            }
+
+            ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(event => {
+                document.addEventListener(event, resetInactivityTimer, true);
+            });
+
+            resetInactivityTimer();
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!checkAuth()) return;
+            
+            setupAutoLogout();
+            
+            if(document.getElementById('imagesContainer').children.length === 0) {
+                addImageInput();
+            }
+            filteredProducts = [...products];
+        });
+    </script>
+</body>
+</html>
