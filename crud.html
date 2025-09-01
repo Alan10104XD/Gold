@@ -802,38 +802,41 @@
             const tbody = document.getElementById('productsTable');
             tbody.innerHTML = '';
             const productsToShow = filteredProducts.length > 0 || document.getElementById('searchInput').value.trim() !== '' ? filteredProducts : products;
-            
+
             productsToShow.forEach((p, i) => {
+                console.log(p);
                 const originalIndex = products.indexOf(p);
-                const mainImage = p.images && p.images.length > 0 ? p.images[0] : '';
-                const imageCount = p.images ? p.images.length : 0;
-                const features = p.features && p.features.length > 0 ? p.features : [];
-                
+                console.log("originalIndex:", originalIndex);
+                // Adaptar nombres de columnas a los que devuelve la API
+                const mainImage = p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : '';
+                const imageCount = p.imagenes ? p.imagenes.length : 0;
+                const features = p.caracteristicas ? p.caracteristicas.split(',').map(f => f.trim()) : [];
+
                 const featureTags = features.map(feature => 
-                    `<span class="feature-tag">${feature.trim()}</span>`
+                    `<span class="feature-tag">${feature}</span>`
                 ).join('');
-                
-                // Detectar si la imagen es local o externa
-                const imageSource = mainImage.startsWith('data:image/') ? 'local' : 'externa';
+
+                const imageSource = mainImage && mainImage.startsWith('data:image/') ? 'local' : 'externa';
                 const imageIndicator = mainImage ? (imageSource === 'local' ? '📁' : '🌐') : '';
-                
+                console.log("p es :", p);
+
                 tbody.innerHTML += `
                     <tr>
                         <td>
-                            <div class="product-code">${p.code}</div>
+                            <div class="product-code">${p.codigo}</div>
                         </td>
                         <td>
                             <div>
-                                <div class="product-name">${p.name}</div>
-                                ${mainImage ? `<img src="${mainImage}" alt="${p.name}" class="product-image w-20 h-16 object-cover" title="Imagen ${imageSource}" />` : '<div class="w-20 h-16 bg-gray-200 rounded flex items-center justify-center text-gray-500 text-xs">Sin imagen</div>'}
+                                <div class="product-name">${p.nombre}</div>
+                                ${mainImage ? `<img src="${mainImage}" alt="${p.nombre}" class="product-image w-20 h-16 object-cover" title="Imagen ${imageSource}" />` : '<div class="w-20 h-16 bg-gray-200 rounded flex items-center justify-center text-gray-500 text-xs">Sin imagen</div>'}
                                 ${imageCount > 0 ? `<div class="image-count mt-2">${imageIndicator} ${imageCount} imagen${imageCount !== 1 ? 'es' : ''}</div>` : ''}
                             </div>
                         </td>
                         <td>
-                            <div class="product-price">$${p.price}</div>
+                            <div class="product-price">$${p.precio}</div>
                         </td>
                         <td>
-                            <div class="product-description">${p.description}</div>
+                            <div class="product-description">${p.descripcion}</div>
                         </td>
                         <td>
                             <div class="product-features">
@@ -842,7 +845,7 @@
                         </td>
                         <td>
                             <div class="certification-date">
-                                ${p.certificationDate || '<span class="text-gray-400">No certificado</span>'}
+                                ${p.fecha || '<span class="text-gray-400">No certificado</span>'}
                             </div>
                         </td>
                         <td class="actions-cell">
@@ -932,6 +935,40 @@
             );
         };
 
+        // Función para obtener el token de las cookies
+        function getTokenFromCookies() {
+            const match = document.cookie.match(/(^|;) ?goldToken=([^;]*)(;|$)/);
+            return match ? match[2] : null;
+        }
+
+        // Función para verificar autenticación con la API
+        async function checkAuth() {
+            const token = getTokenFromCookies();
+            
+            if (!token) {
+                window.location.href = 'login.html';
+                return false;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/verificar-token', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (!response.ok) {
+                    document.cookie = "goldToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                    window.location.href = 'login.html';
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                window.location.href = 'login.html';
+                return false;
+            }
+        }
+
         // Función para cerrar sesión
         function logout() {
             showCustomConfirm(
@@ -943,30 +980,6 @@
                     window.location.href = 'login.html';
                 }
             );
-        }
-
-        // Función para verificar autenticación
-        function checkAuth() {
-            const isAuth = localStorage.getItem('goldAuth') === 'true';
-            const authTime = localStorage.getItem('goldAuthTime');
-            
-            if (!isAuth || !authTime) {
-                window.location.href = 'login.html';
-                return false;
-            }
-            
-            const sessionAge = Date.now() - parseInt(authTime);
-            const maxSessionAge = 24 * 60 * 60 * 1000; // 24 horas
-            
-            if (sessionAge >= maxSessionAge) {
-                localStorage.removeItem('goldAuth');
-                localStorage.removeItem('goldUser');
-                localStorage.removeItem('goldAuthTime');
-                window.location.href = 'login.html';
-                return false;
-            }
-            
-            return true;
         }
 
         // Configurar cierre automático de sesión
@@ -997,16 +1010,44 @@
             resetInactivityTimer();
         }
 
+        // Función para traer productos desde la API
+        async function fetchProducts() {
+            const token = getTokenFromCookies();
+            try {
+                const response = await fetch('http://localhost:8000/productos', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    // Asume que data.productos es un array de productos
+                    products = data.productos || [];
+                    console.log('Productos cargados desde la API:', products);
+                    filteredProducts = [...products];
+                    renderProducts();
+                } else {
+                    alert('No se pudieron cargar los productos');
+                }
+            } catch (error) {
+                alert('Error al conectar con la API de productos');
+            }
+        }
+
         // Inicializar
-        document.addEventListener('DOMContentLoaded', function() {
-            if (!checkAuth()) return;
-            
+        document.addEventListener('DOMContentLoaded', async function() {
+            const isAuth = await checkAuth();
+            if (!isAuth) return;
+
             setupAutoLogout();
-            
+
+            await fetchProducts();
+
             if(document.getElementById('imagesContainer').children.length === 0) {
                 addImageInput();
             }
-            filteredProducts = [...products];
+            // filteredProducts = [...products]; // Ya se asigna en fetchProducts
         });
     </script>
 </body>
