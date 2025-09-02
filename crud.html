@@ -869,7 +869,97 @@
             });
         }
 
-        document.getElementById('productForm').onsubmit = function(e) {
+        // Función para traer productos desde la API
+        async function fetchProducts() {
+            const token = getTokenFromCookies();
+            try {
+                const response = await fetch('http://localhost:8000/productos', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    products = data.productos || [];
+                    filteredProducts = [...products];
+                    renderProducts();
+                } else {
+                    alert('No se pudieron cargar los productos');
+                }
+            } catch (error) {
+                alert('Error al conectar con la API de productos');
+            }
+        }
+
+        // Función para agregar o actualizar producto en la API
+        async function saveProduct(product, isEdit = false, oldCode = null) {
+            const token = getTokenFromCookies();
+            const url = isEdit
+                ? `http://localhost:8000/productos/${encodeURIComponent(oldCode)}`
+                : 'http://localhost:8000/productos';
+            const method = isEdit ? 'PUT' : 'POST';
+
+            // Adaptar el formato al esperado por la API
+            const payload = {
+                codigo: product.code,
+                nombre: product.name,
+                descripcion: product.description,
+                precio: product.price,
+                status: product.status,
+                imagenes: product.images,
+                caracteristicas: product.features.join(','),
+                fecha: product.certificationDate,
+                certificador: product.authenticator
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                    await fetchProducts();
+                    return true;
+                } else {
+                    alert('Error al guardar el producto');
+                    return false;
+                }
+            } catch (error) {
+                alert('Error al conectar con la API');
+                return false;
+            }
+        }
+
+        // Función para eliminar producto en la API
+        async function deleteProductAPI(code) {
+            const token = getTokenFromCookies();
+            try {
+                const response = await fetch(`http://localhost:8000/productos/${encodeURIComponent(code)}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (response.ok) {
+                    await fetchProducts();
+                    return true;
+                } else {
+                    alert('Error al eliminar el producto');
+                    return false;
+                }
+            } catch (error) {
+                alert('Error al conectar con la API');
+                return false;
+            }
+        }
+
+        // Modifica el submit del formulario
+        document.getElementById('productForm').onsubmit = async function(e) {
             e.preventDefault();
             const product = {
                 code: document.getElementById('code').value,
@@ -882,9 +972,10 @@
                 certificationDate: document.getElementById('certificationDate').value,
                 authenticator: document.getElementById('authenticator').value
             };
-            
+
             if(editIndex !== null) {
-                products[editIndex] = product;
+                const oldCode = products[editIndex].codigo;
+                await saveProduct(product, true, oldCode);
                 editIndex = null;
                 const submitBtn = document.querySelector('button[type="submit"]');
                 submitBtn.innerHTML = `
@@ -894,25 +985,24 @@
                     Agregar
                 `;
             } else {
-                products.push(product);
+                await saveProduct(product, false);
             }
-            filteredProducts = [...products];
-            renderProducts();
             this.reset();
             setImageUrls([]);
         };
 
+        // Modifica la función de editar para usar los datos de la API
         window.editProduct = function(i) {
             const p = products[i];
-            document.getElementById('code').value = p.code;
-            document.getElementById('name').value = p.name;
-            document.getElementById('description').value = p.description;
-            document.getElementById('price').value = p.price;
-            document.getElementById('status').value = p.status;
-            setImageUrls(p.images || []);
-            document.getElementById('features').value = p.features.join(', ');
-            document.getElementById('certificationDate').value = p.certificationDate;
-            document.getElementById('authenticator').value = p.authenticator;
+            document.getElementById('code').value = p.codigo;
+            document.getElementById('name').value = p.nombre;
+            document.getElementById('description').value = p.descripcion;
+            document.getElementById('price').value = p.precio;
+            document.getElementById('status').value = p.status || 'Auténtico';
+            setImageUrls(p.imagenes || []);
+            document.getElementById('features').value = p.caracteristicas ? p.caracteristicas.split(',').map(f => f.trim()).join(', ') : '';
+            document.getElementById('certificationDate').value = p.fecha || '';
+            document.getElementById('authenticator').value = p.certificador || '';
             editIndex = i;
             const submitBtn = document.querySelector('button[type="submit"]');
             submitBtn.innerHTML = `
@@ -923,14 +1013,14 @@
             `;
         };
 
+        // Modifica la función de eliminar para usar la API
         window.deleteProduct = function(i) {
-            const productName = products[i].name;
+            const productCode = products[i].codigo;
+            const productName = products[i].nombre;
             showCustomConfirm(
                 `Esta acción eliminará permanentemente el producto "${productName}" y no se puede deshacer.`,
-                function() {
-                    products.splice(i, 1);
-                    filteredProducts = [...products];
-                    renderProducts();
+                async function() {
+                    await deleteProductAPI(productCode);
                 }
             );
         };
@@ -1008,31 +1098,6 @@
             });
 
             resetInactivityTimer();
-        }
-
-        // Función para traer productos desde la API
-        async function fetchProducts() {
-            const token = getTokenFromCookies();
-            try {
-                const response = await fetch('http://localhost:8000/productos', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    // Asume que data.productos es un array de productos
-                    products = data.productos || [];
-                    console.log('Productos cargados desde la API:', products);
-                    filteredProducts = [...products];
-                    renderProducts();
-                } else {
-                    alert('No se pudieron cargar los productos');
-                }
-            } catch (error) {
-                alert('Error al conectar con la API de productos');
-            }
         }
 
         // Inicializar

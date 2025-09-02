@@ -669,6 +669,20 @@
                 handleSearch();
             }
         });
+
+        document.querySelector('form.space-y-4').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const nombre = this.querySelector('input[placeholder="Nombre"]').value.trim();
+    const apellido = this.querySelector('input[placeholder="Apellido"]').value.trim();
+    const telefono = this.querySelector('input[placeholder="Teléfono"]').value.trim();
+    const email = this.querySelector('input[placeholder="Email"]').value.trim();
+    const consulta = this.querySelector('textarea').value.trim();
+
+    const mensaje = `Hola, quiero que me contacten:\n\nNombre: ${nombre}\nApellido: ${apellido}\nTeléfono: ${telefono}\nEmail: ${email}\nConsulta: ${consulta}`;
+    const url = `https://wa.me/5950982861068?text=${encodeURIComponent(mensaje)}`;
+
+    window.open(url, '_blank');
+});
     </script>
 
 
