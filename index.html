@@ -432,67 +432,74 @@
             document.getElementById('notFoundSection').classList.add('hidden');
         }
 
-        // Search function
-        async function handleSearch() {
-            const searchInput = document.getElementById('searchInput');
-            const searchCode = searchInput.value.trim();
+        // Utilidad para formatear el precio con puntos
+function formatPricePYG(price) {
+    if (!price) return '';
+    // Elimina decimales y formatea con puntos cada 3 dígitos
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
 
-            if (!searchCode) {
-                showToast('Por favor ingresa un código de producto', 'error');
-                return;
+// Search function
+async function handleSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const searchCode = searchInput.value.trim();
+
+    if (!searchCode) {
+        showToast('Por favor ingresa un código de producto', 'error');
+        return;
+    }
+
+    if (isSearching) return;
+
+    isSearching = true;
+    const searchBtn = document.getElementById('searchBtn');
+    const searchBtnText = document.getElementById('searchBtnText');
+
+    searchBtn.disabled = true;
+    searchBtnText.textContent = 'Buscando...';
+
+    // Oculta las secciones antes de mostrar resultado
+    document.getElementById('resultsSection').classList.add('hidden');
+    document.getElementById('notFoundSection').classList.add('hidden');
+
+    try {
+        const response = await fetch(`https://api.gold-authentication.com.py/producto/${encodeURIComponent(searchCode)}`);
+        if (response.ok) {
+            const product = await response.json();
+            
+            // Obtener todas las imágenes disponibles
+            let images = [];
+            if (product.imagenes && product.imagenes.length > 0) {
+                images = product.imagenes.filter(img => img && img.trim() !== '');
             }
-
-            if (isSearching) return;
-
-            isSearching = true;
-            const searchBtn = document.getElementById('searchBtn');
-            const searchBtnText = document.getElementById('searchBtnText');
-
-            searchBtn.disabled = true;
-            searchBtnText.textContent = 'Buscando...';
-
-            // Oculta las secciones antes de mostrar resultado
-            document.getElementById('resultsSection').classList.add('hidden');
-            document.getElementById('notFoundSection').classList.add('hidden');
-
-            try {
-                const response = await fetch(`https://api.gold-authentication.com.py/producto/${encodeURIComponent(searchCode)}`);
-                if (response.ok) {
-                    const product = await response.json();
-                    
-                    // Obtener todas las imágenes disponibles
-                    let images = [];
-                    if (product.imagenes && product.imagenes.length > 0) {
-                        images = product.imagenes.filter(img => img && img.trim() !== '');
-                    }
-                    
-                    showProduct({
-                        code: product.codigo,
-                        name: product.nombre,
-                        description: product.descripcion,
-                        price: product.precio ? `$${product.precio}.000 ₲` : '',
-                        status: product.status || 'Auténtico',
-                        image: images.length > 0 ? images[0] : 'https://via.placeholder.com/400x300?text=Sin+Imagen',
-                        images: images, // Pasar todas las imágenes
-                        features: product.caracteristicas ? product.caracteristicas.split(',').map(f => f.trim()) : [],
-                        certificationDate: product.fecha || '',
-                        authenticator: product.certificador || ''
-                    });
-                    showToast(`Producto ${product.status ? product.status.toLowerCase() : 'autenticado'} encontrado`);
-                } else {
-                    showNotFound(searchCode);
-                    showToast('Código no encontrado en la base de datos', 'error');
-                }
-            } catch (error) {
-                console.error('Error al conectar con la API:', error);
-                showNotFound(searchCode);
-                showToast('Error al conectar con la API', 'error');
-            }
-
-            isSearching = false;
-            searchBtn.disabled = false;
-            searchBtnText.textContent = 'Verificar';
+            
+            showProduct({
+                code: product.codigo,
+                name: product.nombre,
+                description: product.descripcion,
+                price: product.precio ? `${formatPricePYG(product.precio)} ₲` : '',
+                status: product.status || 'Auténtico',
+                image: images.length > 0 ? images[0] : 'https://via.placeholder.com/400x300?text=Sin+Imagen',
+                images: images, // Pasar todas las imágenes
+                features: product.caracteristicas ? product.caracteristicas.split(',').map(f => f.trim()) : [],
+                certificationDate: product.fecha || '',
+                authenticator: product.certificador || ''
+            });
+            showToast(`Producto ${product.status ? product.status.toLowerCase() : 'autenticado'} encontrado`);
+        } else {
+            showNotFound(searchCode);
+            showToast('Código no encontrado en la base de datos', 'error');
         }
+    } catch (error) {
+        console.error('Error al conectar con la API:', error);
+        showNotFound(searchCode);
+        showToast('Error al conectar con la API', 'error');
+    }
+
+    isSearching = false;
+    searchBtn.disabled = false;
+    searchBtnText.textContent = 'Verificar';
+}
 
         // Funciones para navegación de imágenes
 function changeMainImage(imageSrc, index) {
