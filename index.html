@@ -548,19 +548,120 @@ function openImageModal(imageSrc, imageAlt) {
     modal.onclick = (e) => {
         if (e.target === modal) modal.remove();
     };
-    
+
     modal.innerHTML = `
-        <div class="relative max-w-4xl max-h-full p-4">
-            <img src="${imageSrc}" alt="${imageAlt}" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+        <div class="relative max-w-4xl max-h-full p-4 flex items-center justify-center">
+            <div id="zoomContainer" style="overflow:hidden; touch-action:none;">
+                <img id="zoomImage" src="${imageSrc}" alt="${imageAlt}" class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl cursor-grab" style="transform: scale(1); transition: transform 0.2s;">
+            </div>
             <button onclick="this.parentElement.parentElement.remove()" class="absolute top-2 right-2 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition-all">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
             </button>
+            <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                <button id="zoomInBtn" class="bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition-all" title="Acercar">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                </button>
+                <button id="zoomOutBtn" class="bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition-all" title="Alejar">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                    </svg>
+                </button>
+                <button id="resetBtn" class="bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-75 transition-all" title="Restablecer">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
+
+    // Evita el scroll de la página mientras mueves la imagen en móvil
+    const zoomContainer = modal.querySelector('#zoomContainer');
+    zoomContainer.addEventListener('touchmove', function(e) {
+        if (isDragging) e.preventDefault();
+    }, { passive: false });
+
+    // Zoom y mover
+    const img = modal.querySelector('#zoomImage');
+    let scale = 1, posX = 0, posY = 0, startX, startY, isDragging = false;
+
+    function updateTransform() {
+        img.style.transform = `scale(${scale}) translate(${posX}px, ${posY}px)`;
+    }
+
+    // Zoom in/out/reset
+    modal.querySelector('#zoomInBtn').onclick = (e) => {
+        e.stopPropagation();
+        scale = Math.min(scale + 0.2, 3);
+        updateTransform();
+    };
+    modal.querySelector('#zoomOutBtn').onclick = (e) => {
+        e.stopPropagation();
+        scale = Math.max(scale - 0.2, 1);
+        updateTransform();
+    };
+    modal.querySelector('#resetBtn').onclick = (e) => {
+        e.stopPropagation();
+        scale = 1; posX = 0; posY = 0;
+        updateTransform();
+    };
+
+    // Mouse drag
+    img.onmousedown = function(e) {
+        isDragging = true;
+        startX = e.clientX - posX;
+        startY = e.clientY - posY;
+        img.style.cursor = 'grabbing';
+        e.preventDefault();
+    };
+    document.onmousemove = function(e) {
+        if (isDragging) {
+            posX = e.clientX - startX;
+            posY = e.clientY - startY;
+            updateTransform();
+        }
+    };
+    document.onmouseup = function() {
+        isDragging = false;
+        img.style.cursor = 'grab';
+    };
+
+    // Touch drag (móvil)
+    img.ontouchstart = function(e) {
+        if (e.touches.length === 1) {
+            isDragging = true;
+            startX = e.touches[0].clientX - posX;
+            startY = e.touches[0].clientY - posY;
+        }
+    };
+    img.ontouchmove = function(e) {
+        if (isDragging && e.touches.length === 1) {
+            posX = e.touches[0].clientX - startX;
+            posY = e.touches[0].clientY - startY;
+            updateTransform();
+        }
+    };
+    img.ontouchend = function() {
+        isDragging = false;
+    };
+
+    // Wheel zoom
+    img.onwheel = function(e) {
+        e.preventDefault();
+        if (e.deltaY < 0) {
+            scale = Math.min(scale + 0.1, 3);
+        } else {
+            scale = Math.max(scale - 0.1, 1);
+        }
+        updateTransform();
+    };
 }
 
 // Show product function
