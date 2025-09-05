@@ -1362,7 +1362,7 @@ async function saveProduct(product, isEdit = false, oldCode = null) {
             
             // Reemplazar alert por notificación estilizada
             const action = isEdit ? 'actualizado' : 'creado';
-            showNotification('success', '¡Producto guardado!', `El producto "${product.name}" se ${action} correctamente`);
+            showNotification('success', '¡Producto guardado!', `El producto "${product.name}" ${action} correctamente`);
             
             return true;
         } else {
