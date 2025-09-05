@@ -137,7 +137,6 @@
             </div>
             
             
-            
             <button 
                 type="submit" 
                 id="loginBtn"
@@ -149,35 +148,6 @@
     </div>
 
     <script>
-        function handleRememberMe() {
-            const rememberCheckbox = document.getElementById('remember');
-            const usernameInput = document.getElementById('username');
-
-            // Al cargar, si hay usuario guardado, lo pone en el input y marca el checkbox
-            const rememberedUser = localStorage.getItem('goldRememberUser');
-            if (rememberedUser) {
-                usernameInput.value = rememberedUser;
-                rememberCheckbox.checked = true;
-            }
-
-            // Al cambiar el checkbox, guarda o elimina el usuario
-            rememberCheckbox.addEventListener('change', function() {
-                if (this.checked) {
-                    localStorage.setItem('goldRememberUser', usernameInput.value.trim());
-                } else {
-                    localStorage.removeItem('goldRememberUser');
-                }
-            });
-
-            // Al escribir en el input, actualiza el usuario guardado si está marcado
-            usernameInput.addEventListener('input', function() {
-                if (rememberCheckbox.checked) {
-                    localStorage.setItem('goldRememberUser', usernameInput.value.trim());
-                }
-            });
-        }
-
-        handleRememberMe();
         // Función para mostrar notificaciones
         function showToast(message, type = 'success') {
             const toast = document.createElement('div');
