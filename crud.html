@@ -688,11 +688,97 @@
         </div>
     </main>
     <script>
-        let products = [];
-        let editIndex = null;
-        let filteredProducts = [];
-        let originalCode = null; // <-- Agrega esto arriba
+        // Función para limpiar completamente la sesión
+        function clearSession() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('goldAuth');
+            localStorage.removeItem('goldUser');
+            localStorage.removeItem('goldAuthTime');
+        }
 
+        // Función para obtener el token - usar localStorage únicamente
+        function getTokenFromCookies() {
+            return localStorage.getItem("token");
+        }
+
+        // Función para verificar autenticación con la API
+        async function checkAuth() {
+            const token = getTokenFromCookies();
+            
+            if (!token) {
+                clearSession();
+                window.location.href = 'login.html';
+                return false;
+            }
+
+            try {
+                const response = await fetch('https://api.gold-authentication.com.py/verificar-token', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    clearSession();
+                    window.location.href = 'login.html';
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                console.error('Error verificando token:', error);
+                clearSession();
+                window.location.href = 'login.html';
+                return false;
+            }
+        }
+
+        // Función para traer productos desde la API
+        async function fetchProducts() {
+            const token = getTokenFromCookies();
+            
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            try {
+                const response = await fetch("https://api.gold-authentication.com.py/productos", {
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    products = data.productos || [];
+                    filteredProducts = [...products];
+                    renderProducts();
+                } else if (response.status === 401) {
+                    // Token expirado o inválido
+                    clearSession();
+                    window.location.href = 'login.html';
+                } else {
+                    showNotification('error', 'Error de carga', 'No se pudieron cargar los productos');
+                }
+            } catch (error) {
+                console.error('Error cargando productos:', error);
+                showNotification('error', 'Error de conexión', 'Error al conectar con la API de productos');
+            }
+        }
+
+        // Inicialización de la página
+        async function initializePage() {
+            const authValid = await checkAuth();
+            if (authValid) {
+                await fetchProducts();
+            }
+        }
+
+        // Llamar a la inicialización cuando se carga la página
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePage();
+        });
         // Función para manejar la carga de archivos
         function handleFileUpload(fileInput) {
             const file = fileInput.files[0];
