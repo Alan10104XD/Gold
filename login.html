@@ -208,9 +208,7 @@
 
             if (response.ok) {
                 const data = await response.json();
-                // Guardar en localStorage como antes
                 localStorage.setItem("token", data.access_token);
-                
                 return data;
             } else {
                 return null;
@@ -239,9 +237,12 @@
             
             if (user && user.access_token) {
                 showToast('¡Inicio de sesión exitoso!', 'success');
+                // Guardar todos los datos de autenticación
                 localStorage.setItem('goldAuth', 'true');
                 localStorage.setItem('goldUser', username);
                 localStorage.setItem('goldAuthTime', Date.now().toString());
+                // El token ya se guardó en la función authenticate
+                
                 setTimeout(() => {
                     window.location.href = 'crud.html';
                 }, 1500);

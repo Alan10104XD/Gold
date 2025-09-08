@@ -1538,21 +1538,40 @@ function closeImageModal() {
         }
         // Función para obtener el token de las cookies
         function getTokenFromCookies() {
-            // Primero intentar obtener de cookies
-            const match = document.cookie.match(/(^|;) ?goldToken=([^;]*)(;|$)/);
-            const cookieToken = match ? match[2] : null;
-            
-            // Si no hay token en cookies, intentar obtener de localStorage
-            const localToken = localStorage.getItem("token");
-            
-            return cookieToken || localToken;
+            return localStorage.getItem("token");
         }
 
         // Función para verificar autenticación con la API
         async function checkAuth() {
-            const token = getTokenFromCookies();
+            // Primero verificar autenticación local
+            const isAuth = localStorage.getItem('goldAuth') === 'true';
+            const authTime = localStorage.getItem('goldAuthTime');
+            
+            if (!isAuth || !authTime) {
+                console.log('No hay autenticación local');
+                window.location.href = 'login.html';
+                return false;
+            }
+            
+            // Verificar si la sesión no ha expirado (24 horas)
+            const sessionAge = Date.now() - parseInt(authTime);
+            const maxSessionAge = 24 * 60 * 60 * 1000; // 24 horas
+            
+            if (sessionAge >= maxSessionAge) {
+                console.log('Sesión expirada');
+                localStorage.removeItem('goldAuth');
+                localStorage.removeItem('goldUser');
+                localStorage.removeItem('goldAuthTime');
+                localStorage.removeItem('token');
+                window.location.href = 'login.html';
+                return false;
+            }
+            
+            // Verificar token con la API
+            const token = localStorage.getItem("token");
             
             if (!token) {
+                console.log('No hay token');
                 window.location.href = 'login.html';
                 return false;
             }
@@ -1564,13 +1583,24 @@ function closeImageModal() {
                         'Authorization': `Bearer ${token}`
                     }
                 });
+                
                 if (!response.ok) {
-                    document.cookie = "goldToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                    console.log('Token inválido');
+                    localStorage.removeItem('goldAuth');
+                    localStorage.removeItem('goldUser');
+                    localStorage.removeItem('goldAuthTime');
+                    localStorage.removeItem('token');
                     window.location.href = 'login.html';
                     return false;
                 }
+                
                 return true;
             } catch (error) {
+                console.log('Error verificando token:', error);
+                localStorage.removeItem('goldAuth');
+                localStorage.removeItem('goldUser');
+                localStorage.removeItem('goldAuthTime');
+                localStorage.removeItem('token');
                 window.location.href = 'login.html';
                 return false;
             }
@@ -1584,39 +1614,38 @@ function closeImageModal() {
                     localStorage.removeItem('goldAuth');
                     localStorage.removeItem('goldUser');
                     localStorage.removeItem('goldAuthTime');
+                    localStorage.removeItem('token');
                     window.location.href = 'login.html';
                 }
             );
         }
 
-        // Configurar cierre automático de sesión
-        function setupAutoLogout() {
-            window.addEventListener('beforeunload', function() {
-                localStorage.removeItem('goldAuth');
-                localStorage.removeItem('goldUser');
-                localStorage.removeItem('goldAuthTime');
-            });
+        // Actualiza setupAutoLogout:
+function setupAutoLogout() {
+    window.addEventListener('beforeunload', function() {
+        // No eliminar en beforeunload para permitir recargas de página
+    });
 
-            let inactivityTimer;
-            
-            function resetInactivityTimer() {
-                clearTimeout(inactivityTimer);
-                inactivityTimer = setTimeout(() => {
-                    localStorage.removeItem('goldAuth');
-                    localStorage.removeItem('goldUser');
-                    localStorage.removeItem('goldAuthTime');
-                    alert('Sesión cerrada por inactividad');
-                    window.location.href = 'login.html';
-                }, 300000); // 5 minutos
-            }
+    let inactivityTimer;
+    
+    function resetInactivityTimer() {
+        clearTimeout(inactivityTimer);
+        inactivityTimer = setTimeout(() => {
+            localStorage.removeItem('goldAuth');
+            localStorage.removeItem('goldUser');
+            localStorage.removeItem('goldAuthTime');
+            localStorage.removeItem('token');
+            alert('Sesión cerrada por inactividad');
+            window.location.href = 'login.html';
+        }, 300000); // 5 minutos
+    }
 
-            ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(event => {
-                document.addEventListener(event, resetInactivityTimer, true);
-            });
+    ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(event => {
+        document.addEventListener(event, resetInactivityTimer, true);
+    });
 
-            resetInactivityTimer();
-        }
-
+    resetInactivityTimer();
+}
         // Inicializar
         document.addEventListener('DOMContentLoaded', async function() {
             const isAuth = await checkAuth();
