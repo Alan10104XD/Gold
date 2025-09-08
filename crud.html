@@ -1008,28 +1008,27 @@
             });
         }
 
-        // Función para traer productos desde la API
-        async function fetchProducts() {
-            const token = getTokenFromCookies();
-            try {
-                const response = await fetch('https://api.gold-authentication.com.py/productos', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    products = data.productos || [];
-                    filteredProducts = [...products];
-                    renderProducts();
-                } else {
-                    alert('No se pudieron cargar los productos');
-                }
-            } catch (error) {
-                alert('Error al conectar con la API de productos');
+// Función para traer productos desde la API
+async function fetchProducts() {
+    const token = getTokenFromCookies(); // CAMBIAR para usar la misma función
+    try {
+        const response = await fetch("https://api.gold-authentication.com.py/productos", {
+            headers: {
+                "Authorization": "Bearer " + token
             }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            products = data.productos || [];
+            filteredProducts = [...products];
+            renderProducts();
+        } else {
+            showNotification('error', 'Error de carga', 'No se pudieron cargar los productos');
         }
+    } catch (error) {
+        showNotification('error', 'Error de conexión', 'Error al conectar con la API de productos');
+    }
+}
 
         // Modifica la función saveProduct para mostrar cambios de código
 
@@ -1537,40 +1536,70 @@ function closeImageModal() {
                 showNotification('error', 'Error de conexión', 'No se pudo conectar con el servidor');
             }
         }
-        // Función para obtener el token de las cookies
-        function getTokenFromCookies() {
-            const match = document.cookie.match(/(^|;) ?goldToken=([^;]*)(;|$)/);
-            return match ? match[2] : null;
-        }
+        // Función para obtener el token - MODIFICAR para usar localStorage en vez de cookies
+function getTokenFromCookies() {
+    // REEMPLAZAR esta función completamente
+    return localStorage.getItem("token");
+}
 
-        // Función para verificar autenticación con la API
-        async function checkAuth() {
-            const token = getTokenFromCookies();
-            
-            if (!token) {
-                window.location.href = 'login.html';
-                return false;
+// Función para verificar autenticación con la API
+async function checkAuth() {
+    const token = getTokenFromCookies();
+    
+    if (!token) {
+        window.location.href = 'login.html';
+        return false;
+    }
+
+    try {
+        const response = await fetch('https://api.gold-authentication.com.py/verificar-token', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
             }
-
-            try {
-                const response = await fetch('https://api.gold-authentication.com.py/verificar-token', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                if (!response.ok) {
-                    document.cookie = "goldToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                    window.location.href = 'login.html';
-                    return false;
-                }
-                return true;
-            } catch (error) {
-                window.location.href = 'login.html';
-                return false;
-            }
+        });
+        if (!response.ok) {
+            // ELIMINAR esta línea que borra la cookie
+            // document.cookie = "goldToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            localStorage.removeItem('token'); // Borrar token del localStorage
+            localStorage.removeItem('goldAuth');
+            localStorage.removeItem('goldUser');
+            localStorage.removeItem('goldAuthTime');
+            window.location.href = 'login.html';
+            return false;
         }
+        return true;
+    } catch (error) {
+        localStorage.removeItem('token'); // Borrar token si hay error
+        localStorage.removeItem('goldAuth');
+        localStorage.removeItem('goldUser'); 
+        localStorage.removeItem('goldAuthTime');
+        window.location.href = 'login.html';
+        return false;
+    }
+}
 
+// Para fetchProducts, usar el token del mismo método
+async function fetchProducts() {
+    const token = getTokenFromCookies(); // CAMBIAR para usar la misma función
+    try {
+        const response = await fetch("https://api.gold-authentication.com.py/productos", {
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            products = data.productos || [];
+            filteredProducts = [...products];
+            renderProducts();
+        } else {
+            showNotification('error', 'Error de carga', 'No se pudieron cargar los productos');
+        }
+    } catch (error) {
+        showNotification('error', 'Error de conexión', 'Error al conectar con la API de productos');
+    }
+}
         // Función para cerrar sesión
         function logout() {
             showCustomConfirm(

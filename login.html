@@ -208,7 +208,8 @@
 
             if (response.ok) {
                 const data = await response.json();
-                return data; // Puedes ajustar según la respuesta de tu API
+                localStorage.setItem("token", data.access_token);
+                return data;
             } else {
                 return null;
             }
@@ -235,7 +236,6 @@
             const user = await authenticate(username, password);
             
             if (user && user.access_token) {
-                document.cookie = "goldToken=" + user.access_token + "; path=/;";
                 showToast('¡Inicio de sesión exitoso!', 'success');
                 localStorage.setItem('goldAuth', 'true');
                 localStorage.setItem('goldUser', username);
