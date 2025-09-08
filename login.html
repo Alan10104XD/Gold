@@ -211,9 +211,6 @@
                 // Guardar en localStorage como antes
                 localStorage.setItem("token", data.access_token);
                 
-                // También guardar en cookies para que crud.html lo encuentre
-                document.cookie = `goldToken=${data.access_token}; path=/; max-age=${60*60*24}`; // Cookie válida por 24 horas
-                
                 return data;
             } else {
                 return null;
