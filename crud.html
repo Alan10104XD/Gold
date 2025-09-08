@@ -688,380 +688,57 @@
         </div>
     </main>
     <script>
-        let products = [];
-        let editIndex = null;
-        let filteredProducts = [];
-        let originalCode = null; // <-- Agrega esto arriba
+        // Elimina referencias a "cookies" y usa SOLO localStorage.
+    // 1. Renombrar la antigua getTokenFromCookies a getToken
+    // 2. Actualizar TODAS las llamadas
+    // 3. Eliminar duplicado de saveProduct y dejar una sola versión
+    // 4. Quitar texto suelto "Cookie" si existía en el HTML
 
-        // Función para manejar la carga de archivos
-        function handleFileUpload(fileInput) {
-            const file = fileInput.files[0];
-            if (!file) return;
-
-            // Validar tipo de archivo
-            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-            if (!validTypes.includes(file.type)) {
-                alert('Por favor selecciona un archivo de imagen válido (JPEG, PNG, GIF, WebP)');
-                fileInput.value = '';
-                return;
-            }
-
-            // Validar tamaño (máximo 5MB)
-            const maxSize = 5 * 1024 * 1024; // 5MB
-            if (file.size > maxSize) {
-                alert('El archivo es demasiado grande. El tamaño máximo es 5MB');
-                fileInput.value = '';
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const imageData = e.target.result;
-                const group = fileInput.closest('.image-input-group');
-                const urlInput = group.querySelector('.image-url');
-                const preview = group.querySelector('.image-preview');
-                
-                // Establecer la imagen en base64 en el input URL
-                urlInput.value = imageData;
-                
-                // Mostrar vista previa
-                preview.innerHTML = `
-                    <div class="relative">
-                        <img src="${imageData}" alt="Vista previa" class="w-32 h-24 object-cover border rounded shadow" />
-                        <div class="absolute top-1 right-1 bg-green-500 text-white text-xs px-2 py-1 rounded">
-                            Archivo Local
-                        </div>
-                    </div>
-                `;
-            };
-            
-            reader.onerror = function() {
-                alert('Error al cargar el archivo');
-                fileInput.value = '';
-            };
-            
-            reader.readAsDataURL(file);
-        }
-
-        // Función para limpiar el input de archivo
-        function clearFileInput(button) {
-            const group = button.closest('.image-input-group');
-            const fileInput = group.querySelector('.image-file');
-            const urlInput = group.querySelector('.image-url');
-            const preview = group.querySelector('.image-preview');
-            
-            fileInput.value = '';
-            urlInput.value = '';
-            preview.innerHTML = '';
-        }
-
-        function showImagePreviews() {
-            const imageGroups = document.querySelectorAll('.image-input-group');
-            imageGroups.forEach(group => {
-                const urlInput = group.querySelector('.image-url');
-                const fileInput = group.querySelector('.image-file');
-                const preview = group.querySelector('.image-preview');
-                const url = urlInput.value.trim();
-                
-                // Solo mostrar vista previa si no hay archivo cargado y hay URL
-                if (!fileInput.files[0] && url) {
-                    if (url.startsWith('data:image/')) {
-                        // Es una imagen en base64 (archivo local)
-                        preview.innerHTML = `
-                            <div class="relative">
-                                <img src="${url}" alt="Vista previa" class="w-32 h-24 object-cover border rounded shadow" />
-                                <div class="absolute top-1 right-1 bg-green-500 text-white text-xs px-2 py-1 rounded">
-                                    Archivo Local
-                                </div>
-                            </div>
-                        `;
-                    } else {
-                        // Es una URL externa
-                        preview.innerHTML = `
-                            <div class="relative">
-                                <img src="${url}" alt="Vista previa" class="w-32 h-24 object-cover border rounded shadow" />
-                                <div class="absolute top-1 right-1 bg-blue-500 text-white text-xs px-2 py-1 rounded">
-                                    URL Externa
-                                </div>
-                            </div>
-                        `;
-                    }
-                } else if (!fileInput.files[0] && !url) {
-                    preview.innerHTML = '';
-                }
-            });
-        }
-
-        function addImageInput() {
-            const container = document.getElementById('imagesContainer');
-            const newGroup = document.createElement('div');
-            newGroup.className = 'image-input-group mb-2';
-            newGroup.innerHTML = `
-                <div class="flex items-center gap-2 mb-2">
-                    <input type="text" class="image-url w-full border p-2 rounded" placeholder="URL de la imagen" oninput="showImagePreviews()" />
-                    <button type="button" onclick="removeImageInput(this)" class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600">×</button>
-                </div>
-                <div class="flex items-center gap-2 mb-2">
-                    <input type="file" class="image-file w-full border p-2 rounded" accept="image/*" onchange="handleFileUpload(this)" />
-                    <button type="button" onclick="clearFileInput(this)" class="bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600">Limpiar</button>
-                </div>
-                <div class="image-preview mt-2"></div>
-            `;
-            container.appendChild(newGroup);
-        }
-
-        function removeImageInput(button) {
-            const container = document.getElementById('imagesContainer');
-            if(container.children.length > 1) {
-                button.closest('.image-input-group').remove();
-            }
-        }
-
-        function getImageUrls() {
-            const inputs = document.querySelectorAll('.image-url');
-            const urls = [];
-            inputs.forEach(input => {
-                if(input.value.trim()) {
-                    urls.push(input.value.trim());
-                }
-            });
-            return urls;
-        }
-
-        function setImageUrls(urls) {
-            const container = document.getElementById('imagesContainer');
-            container.innerHTML = '';
-            
-            if(urls.length === 0) {
-                addImageInput();
-                return;
-            }
-
-            urls.forEach(url => {
-                const newGroup = document.createElement('div');
-                newGroup.className = 'image-input-group mb-2';
-                newGroup.innerHTML = `
-                    <div class="flex items-center gap-2 mb-2">
-                        <input type="text" class="image-url w-full border p-2 rounded" placeholder="URL de la imagen" value="${url}" oninput="showImagePreviews()" />
-                        <button type="button" onclick="removeImageInput(this)" class="bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600">×</button>
-                    </div>
-                    <div class="flex items-center gap-2 mb-2">
-                        <input type="file" class="image-file w-full border p-2 rounded" accept="image/*" onchange="handleFileUpload(this)" />
-                        <button type="button" onclick="clearFileInput(this)" class="bg-gray-500 text-white px-3 py-2 rounded hover:bg-gray-600">Limpiar</button>
-                    </div>
-                    <div class="image-preview mt-2"></div>
-                `;
-                container.appendChild(newGroup);
-            });
-            showImagePreviews();
-        }
-
-        // Función para comprimir imagen (opcional)
-        function compressImage(file, maxWidth = 800, quality = 0.8) {
-            return new Promise((resolve) => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                const img = new Image();
-                
-                img.onload = function() {
-                    const ratio = Math.min(maxWidth / img.width, maxWidth / img.height);
-                    canvas.width = img.width * ratio;
-                    canvas.height = img.height * ratio;
-                    
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    canvas.toBlob(resolve, 'image/jpeg', quality);
-                };
-                
-                img.src = URL.createObjectURL(file);
-            });
-        }
-
-        function filterProducts() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-            
-            if (searchTerm === '') {
-                filteredProducts = [...products];
-            } else {
-                filteredProducts = products.filter(product => {
-                    const nameMatch = product.name.toLowerCase().includes(searchTerm);
-                    const codeMatch = product.code.toLowerCase().includes(searchTerm);
-                    return nameMatch || codeMatch;
-                });
-            }
-            renderProducts();
-        }
-
-        function showCustomConfirm(message, onConfirm) {
-            const modalHTML = `
-                <div class="modal-overlay" id="customModal">
-                    <div class="modal-content">
-                        <div class="modal-icon">
-                            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-900 text-center mb-2">¿Estás seguro?</h3>
-                        <p class="text-gray-600 text-center mb-6">${message}</p>
-                        <div class="flex gap-3 justify-center">
-                            <button class="btn-cancel" onclick="closeCustomModal()">Cancelar</button>
-                            <button class="btn-danger" onclick="confirmAction()">Eliminar</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
-            
-            window.confirmAction = function() {
-                onConfirm();
-                closeCustomModal();
-            };
-        }
-
-        function closeCustomModal() {
-            const modal = document.getElementById('customModal');
-            if (modal) {
-                modal.remove();
-            }
-        }
-
-        function renderProducts() {
-            const tbody = document.getElementById('productsTable');
-            tbody.innerHTML = '';
-            const productsToShow = filteredProducts.length > 0 || document.getElementById('searchInput').value.trim() !== '' ? filteredProducts : products;
-
-            productsToShow.forEach((p, i) => {
-                console.log(p);
-                const originalIndex = products.indexOf(p);
-                console.log("originalIndex:", originalIndex);
-                // Adaptar nombres de columnas a los que devuelve la API
-                const mainImage = p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : '';
-                const imageCount = p.imagenes ? p.imagenes.length : 0;
-                const features = p.caracteristicas ? p.caracteristicas.split(',').map(f => f.trim()) : [];
-
-                const featureTags = features.map(feature => 
-                    `<span class="feature-tag">${feature}</span>`
-                ).join('');
-
-                const imageSource = mainImage && mainImage.startsWith('data:image/') ? 'local' : 'externa';
-                const imageIndicator = mainImage ? (imageSource === 'local' ? '📁' : '🌐') : '';
-                console.log("p es :", p);
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td>
-                            <div class="product-code">${p.codigo}</div>
-                        </td>
-                        <td>
-                            <div>
-                                <div class="product-name">${p.nombre}</div>
-                                ${p.imagenes && p.imagenes.length > 0
-    ? p.imagenes.map(img => `<img src="${img}" alt="${p.nombre}" class="product-image w-20 h-16 object-cover inline-block mr-2 cursor-pointer transition-transform duration-200 hover:scale-105 hover:shadow-lg border-2 border-emerald-400" onclick="showImageModal('${img}', '${p.nombre.replace(/'/g, "&apos;")}')" />`).join('')
-    : '<div class="w-20 h-16 bg-gray-200 rounded flex items-center justify-center text-gray-500 text-xs">Sin imagen</div>'
-}
-                                ${imageCount > 0 ? `<div class="image-count mt-2">${imageIndicator} ${imageCount} imagen${imageCount !== 1 ? 'es' : ''}</div>` : ''}
-
-                            </div>
-                        </td>
-                        <td>
-                            <div class="product-price">$${p.precio}</div>
-                        </td>
-                        <td>
-                            <div class="product-description">${p.descripcion}</div>
-                        </td>
-                        <td>
-                            <div class="product-features">
-                                ${featureTags || '<span class="text-gray-400 italic">Sin características</span>'}
-                            </div>
-                        </td>
-                        <td>
-                            <div class="certification-date">
-                                ${p.fecha || '<span class="text-gray-400">No certificado</span>'}
-                            </div>
-                        </td>
-                        <td class="actions-cell">
-                            <div class="flex gap-2 flex-wrap">
-                                <button onclick="editProduct(${originalIndex})" class="btn btn-secondary btn-sm">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                    </svg>
-                                    Editar
-                                </button>
-                                <button onclick="deleteProduct(${originalIndex})" class="btn btn-error btn-sm">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                    </svg>
-                                    Eliminar
-                                </button>
-                                ${imageCount > 0 ? `
-                                    <button onclick="showImageManager('${p.codigo}', '${p.nombre.replace(/'/g, '&apos;')}', ${JSON.stringify(p.imagenes).replace(/"/g, '&quot;')})" class="btn btn-info btn-sm">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2z"></path>
-                                        </svg>
-                                        Imágenes
-                                    </button>
-                                ` : ''}
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-// Función para traer productos desde la API
-async function fetchProducts() {
-    const token = localStorage.getItem("token");
-    try {
-        const response = await fetch("https://api.gold-authentication.com.py/productos", {
-            headers: {
-                "Authorization": "Bearer " + token
-            }
-        });
-        if (response.ok) {
-            const data = await response.json();
-            products = data.productos || [];
-            filteredProducts = [...products];
-            renderProducts();
-        } else {
-            alert('No se pudieron cargar los productos');
-        }
-    } catch (error) {
-        alert('Error al conectar con la API de productos');
+    // Reemplaza (o añade si no existe) esta función:
+    function getToken() {
+        return localStorage.getItem('token');
     }
-}
 
-        // Modifica la función saveProduct para mostrar cambios de código
+    // Reemplaza la función saveProduct (elimina cualquier otra duplicada)
+    async function saveProduct(product, isEdit = false, oldCode = null) {
+        const token = getToken();
+        if (!token) {
+            showNotification('error', 'Sesión inválida', 'Debes iniciar sesión nuevamente');
+            window.location.href = 'login.html';
+            return false;
+        }
 
-async function saveProduct(product, isEdit = false, oldCode = null) {
-    const token = getTokenFromCookies();
-    const url = isEdit
-        ? `https://api.gold-authentication.com.py/productos/${encodeURIComponent(oldCode)}`
-        : 'https://api.gold-authentication.com.py/productos';
-    const method = isEdit ? 'PUT' : 'POST';
+        const url = isEdit
+            ? `https://api.gold-authentication.com.py/productos/${encodeURIComponent(oldCode)}`
+            : 'https://api.gold-authentication.com.py/productos';
+        const method = isEdit ? 'PUT' : 'POST';
 
-    const payload = {
-        codigo: product.code,
-        nombre: product.name,
-        descripcion: product.description,
-        precio: product.price,              // entero
-        caracteristicas: product.features.join(','),
-        certificador: product.authenticator
-    };
+        const payload = {
+            codigo: product.code,
+            nombre: product.name,
+            descripcion: product.description,
+            precio: product.price,
+            caracteristicas: product.features.join(','),
+            certificador: product.authenticator
+        };
 
-    try {
-        const response = await fetch(url, {
-            method,
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(payload)
-        });
+        try {
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
 
-        if (response.ok) {
-            const result = await response.json();
-            // Solo crear imágenes cuando es producto nuevo
-            if (!isEdit && product.images.length > 0) {
+            if (!response.ok) {
+                showNotification('error', 'Error al guardar', 'Revisa los datos o la sesión');
+                return false;
+            }
+
+            // Subir/registrar imágenes (si se ingresaron URLs nuevas)
+            if (product.images.length > 0) {
                 await fetch('https://api.gold-authentication.com.py/imagenes-url', {
                     method: 'POST',
                     headers: {
@@ -1078,588 +755,136 @@ async function saveProduct(product, isEdit = false, oldCode = null) {
             await fetchProducts();
 
             if (isEdit && oldCode !== product.code) {
-                showNotification('success', '¡Código actualizado!',
-                    `Producto actualizado. Código cambió de "${oldCode}" a "${product.code}"`);
+                showNotification('success', 'Código actualizado', `Cambió de ${oldCode} a ${product.code}`);
             } else {
-                const action = isEdit ? 'actualizado' : 'creado';
-                showNotification('success', '¡Producto guardado!',
-                    `El producto "${product.name}" se ${action} correctamente`);
+                showNotification('success', 'Producto guardado', `El producto "${product.name}" se ${isEdit ? 'actualizó' : 'creó'} correctamente`);
             }
             return true;
-        } else {
-            showNotification('error', 'Error al guardar', 'No se pudo guardar el producto');
+        } catch (e) {
+            showNotification('error', 'Error de conexión', 'No se pudo contactar al servidor');
             return false;
         }
-    } catch (error) {
-        showNotification('error', 'Error de conexión', 'No se pudo conectar con el servidor');
-        return false;
     }
-}
 
-        // Nueva función para obtener archivos de imagen
-        function getImageFiles() {
-            const fileInputs = document.querySelectorAll('.image-file');
-            const files = [];
-            fileInputs.forEach(input => {
-                if (input.files[0]) {
-                    files.push(input.files[0]);
-                }
+    // Actualiza todas las funciones que usaban getTokenFromCookies:
+
+    async function uploadImages(codigoProducto, files) {
+        const token = getToken();
+        if (!token || files.length === 0) return;
+        const formData = new FormData();
+        formData.append('codigo_producto', codigoProducto);
+        files.forEach(f => formData.append('imagenes', f));
+        try {
+            await fetch('https://api.gold-authentication.com.py/imagenes', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
             });
-            return files;
-        }
+        } catch (_) {}
+    }
 
-        // Nueva función para subir imágenes
-        async function uploadImages(codigoProducto, files) {
-            const token = getTokenFromCookies();
-            const formData = new FormData();
-            
-            formData.append('codigo_producto', codigoProducto);
-            files.forEach(file => {
-                formData.append('imagenes', file);
+    async function deleteAllProductImages(productCode) {
+        const token = getToken();
+        try {
+            const r = await fetch(`https://api.gold-authentication.com.py/imagenes/producto/${encodeURIComponent(productCode)}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
             });
-
-            try {
-                const response = await fetch('https://api.gold-authentication.com.py/imagenes', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    console.error('Error al subir imágenes');
-                }
-            } catch (error) {
-                console.error('Error al conectar con la API de imágenes');
-            }
-        }
-
-        // Modifica el submit del formulario
-        document.getElementById('productForm').onsubmit = async function(e) {
-            e.preventDefault();
-            const priceValue = document.getElementById('price').value;
-            const priceInt = parseInt(priceValue);
-            if (isNaN(priceInt) || priceInt < 0) {
-                showNotification('error', 'Error de validación', 'El precio debe ser un número entero mayor o igual a 0');
-                return;
-            }
-            const product = {
-                code: document.getElementById('code').value,
-                name: document.getElementById('name').value,
-                description: document.getElementById('description').value,
-                price: priceInt, // <-- SIEMPRE entero
-                status: document.getElementById('status').value,
-                images: getImageUrls(),
-                features: document.getElementById('features').value.split(',').map(f => f.trim()),
-                certificationDate: document.getElementById('certificationDate').value,
-                authenticator: document.getElementById('authenticator').value
-            };
-            if(editIndex !== null) {
-                await saveProduct(product, true, originalCode);
-                editIndex = null;
-                originalCode = null;
+            if (r.ok) {
+                showNotification('success', 'Imágenes eliminadas', 'Se eliminaron todas las imágenes');
+                await fetchProducts();
             } else {
-                await saveProduct(product, false);
+                showNotification('error', 'Error', 'No se eliminaron las imágenes');
             }
-            this.reset();
-            setImageUrls([]);
-        };
-
-        // Modifica la función de editar para usar los datos de la API
-        window.editProduct = function(i) {
-            const p = products[i];
-            document.getElementById('code').value = p.codigo;
-            document.getElementById('name').value = p.nombre;
-            document.getElementById('description').value = p.descripcion;
-            document.getElementById('price').value = p.precio;
-            document.getElementById('status').value = p.status || 'Auténtico';
-            
-            // NO cargar las imágenes existentes al editar
-            setImageUrls([]); // Dejar los campos de imagen vacíos
-            
-            document.getElementById('features').value = p.caracteristicas ? p.caracteristicas.split(',').map(f => f.trim()).join(', ') : '';
-            document.getElementById('certificationDate').value = p.fecha || '';
-            document.getElementById('authenticator').value = p.certificador || '';
-            editIndex = i;
-            originalCode = p.codigo; // <-- Guarda el código original
-            
-            const submitBtn = document.querySelector('button[type="submit"]');
-            submitBtn.innerHTML = `
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                </svg>
-                Actualizar Producto
-            `;
-        };
-
-        // Modifica la función de eliminar para usar la API
-        window.deleteProduct = function(i) {
-            const productCode = products[i].codigo;
-            const productName = products[i].nombre;
-            showCustomConfirm(
-                `Esta acción eliminará permanentemente el producto "${productName}" y no se puede deshacer.`,
-                async function() {
-                    await deleteProductAPI(productCode);
-                }
-            );
-        };
-
-        // Función para eliminar todas las imágenes de un producto
-async function deleteAllProductImages(productCode) {
-    const token = getTokenFromCookies();
-    try {
-        const response = await fetch(`https://api.gold-authentication.com.py/imagenes/producto/${encodeURIComponent(productCode)}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        if (response.ok) {
-            const result = await response.json();
-            showNotification('success', '¡Éxito!', result.message);
-            await fetchProducts(); // Recargar productos
-        } else {
-            showNotification('error', 'Error', 'No se pudieron eliminar las imágenes');
+        } catch {
+            showNotification('error', 'Error de red', 'Sin conexión');
         }
-    } catch (error) {
-        showNotification('error', 'Error de conexión', 'No se pudo conectar con el servidor');
-    }
-}
-
-// Función para eliminar una imagen específica por URL
-async function deleteImageByUrl(imageUrl) {
-    const token = getTokenFromCookies();
-    try {
-        const response = await fetch('https://api.gold-authentication.com.py/imagenes/url', {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                url_imagen: imageUrl
-            })
-        });
-        
-        if (response.ok) {
-            const result = await response.json();
-            showNotification('success', 'Imagen eliminada', 'La imagen se eliminó correctamente');
-            await fetchProducts(); // Recargar productos
-        } else {
-            showNotification('error', 'Error', 'No se pudo eliminar la imagen');
-        }
-    } catch (error) {
-        showNotification('error', 'Error de conexión', 'No se pudo conectar con el servidor');
-    }
-}
-
-// Función para mostrar notificaciones personalizadas
-function showNotification(type, title, message, duration = 4000) {
-    const icons = {
-        success: `<svg class="notification-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                  </svg>`,
-        error: `<svg class="notification-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>`,
-        warning: `<svg class="notification-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                  </svg>`,
-        info: `<svg class="notification-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-               </svg>`
-    };
-
-    const notificationId = 'notification-' + Date.now();
-    const notificationHTML = `
-        <div class="notification notification-${type}" id="${notificationId}">
-            ${icons[type]}
-            <div class="notification-content">
-                <div class="notification-title">${title}</div>
-                <div class="notification-message">${message}</div>
-            </div>
-            <button class="notification-close" onclick="closeNotification('${notificationId}')">
-                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-            <div class="notification-progress"></div>
-        </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', notificationHTML);
-    
-    const notification = document.getElementById(notificationId);
-    
-    // Mostrar la notificación
-    setTimeout(() => {
-        notification.classList.add('show');
-    }, 100);
-    
-    // Auto-cerrar después del tiempo especificado
-    setTimeout(() => {
-        closeNotification(notificationId);
-    }, duration);
-}
-
-function closeNotification(notificationId) {
-    const notification = document.getElementById(notificationId);
-    if (notification) {
-        notification.classList.remove('show');
-        setTimeout(() => {
-            notification.remove();
-        }, 300);
-    }
-}
-
-// También puedes reemplazar otros alerts por notificaciones estilizadas:
-
-// En la función saveProduct:
-async function saveProduct(product, isEdit = false, oldCode = null) {
-    const token = getTokenFromCookies();
-    const url = isEdit
-        ? `https://api.gold-authentication.com.py/productos/${encodeURIComponent(oldCode)}`
-        : 'https://api.gold-authentication.com.py/productos';
-    const method = isEdit ? 'PUT' : 'POST';
-
-    const payload = {
-        codigo: product.code,
-        nombre: product.name,
-        descripcion: product.description,
-        precio: product.price,
-        caracteristicas: product.features.join(','),
-        certificador: product.authenticator
-    };
-
-    try {
-        const response = await fetch(url, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(payload)
-        });
-
-        if (response.ok) {
-            if (product.images.length > 0) {
-                await fetch('https://api.gold-authentication.com.py/imagenes-url', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        codigo_producto: product.code,
-                        urls: product.images
-                    })
-                });
-            }
-            await fetchProducts();
-            
-            // Reemplazar alert por notificación estilizada
-            const action = isEdit ? 'actualizado' : 'creado';
-            showNotification('success', '¡Producto guardado!', `El producto "${product.name}" ${action} correctamente`);
-            
-            return true;
-        } else {
-            showNotification('error', 'Error al guardar', 'No se pudo guardar el producto');
-            return false;
-        }
-    } catch (error) {
-        showNotification('error', 'Error de conexión', 'No se pudo conectar con el servidor');
-        return false;
-    }
-}
-
-// En la función deleteProductAPI:
-async function deleteProductAPI(productCode) {
-    const token = getTokenFromCookies();
-    try {
-        const response = await fetch(`https://api.gold-authentication.com.py/productos/${encodeURIComponent(productCode)}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        if (response.ok) {
-            await fetchProducts();
-            showNotification('success', 'Producto eliminado', 'El producto se eliminó correctamente');
-        } else {
-            showNotification('error', 'Error', 'No se pudo eliminar el producto');
-        }
-    } catch (error) {
-        showNotification('error', 'Error de conexión', 'No se pudo conectar con el servidor');
-    }
-}
-
-// En showImageManager, cambiar el alert por:
-function showImageManager(productCode, productName, images) {
-    if (!images || images.length === 0) {
-        showNotification('info', 'Sin imágenes', 'Este producto no tiene imágenes para gestionar');
-        return;
     }
 
-    const imagesList = images.map((img, index) => `
-        <div class="flex items-center gap-3 p-3 border rounded-lg mb-2">
-            <img src="${img}" alt="Imagen ${index + 1}" class="w-16 h-12 object-cover rounded" />
-            <div class="flex-1">
-                <p class="text-sm text-gray-600">Imagen ${index + 1}</p>
-            </div>
-            <button onclick="deleteSpecificImage('${img}', '${productCode}')" 
-                    class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">
-                Eliminar
-            </button>
-        </div>
-    `).join('');
-
-    const modalHTML = `
-        <div class="modal-overlay" id="imageManagerModal">
-            <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">Gestionar Imágenes - ${productName}</h3>
-                    <button onclick="closeImageManager()" class="text-gray-500 hover:text-gray-700">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-                
-                <div class="mb-4">
-                    <p class="text-sm text-gray-600 mb-3">Código del producto: <span class="font-mono font-semibold">${productCode}</span></p>
-                    <p class="text-sm text-gray-600 mb-4">Total de imágenes: <span class="font-semibold">${images.length}</span></p>
-                </div>
-
-                <div class="mb-6">
-                    ${imagesList}
-                </div>
-
-                <div class="flex gap-3 justify-end border-t pt-4">
-                    <button onclick="closeImageManager()" class="btn-cancel">
-                        Cerrar
-                    </button>
-                    <button onclick="deleteAllImagesConfirm('${productCode}', '${productName}')" 
-                            class="btn-danger">
-                        Eliminar Todas
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-}
-
-// Modal para ver imagen ampliada
-function showImageModal(imageUrl, productName) {
-    const modalHTML = `
-        <div class="modal-overlay" id="imageViewModal" style="z-index:2000;">
-            <div class="modal-content" style="max-width:600px; padding:0; overflow:hidden;">
-                <div class="flex justify-between items-center p-4 bg-gray-100 border-b">
-                    <span class="font-semibold text-gray-700">${productName}</span>
-                    <button onclick="closeImageModal()" class="text-gray-500 hover:text-gray-700">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-                <div class="flex justify-center items-center bg-white p-6">
-                    <img src="${imageUrl}" alt="Vista ampliada" class="rounded-lg shadow-lg max-h-[70vh] max-w-full object-contain border-4 border-emerald-400" />
-                </div>
-            </div>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-}
-
-function closeImageModal() {
-    const modal = document.getElementById('imageViewModal');
-    if (modal) modal.remove();
-}
-
-        // Función para cerrar el gestor de imágenes
-        function closeImageManager() {
-            const modal = document.getElementById('imageManagerModal');
-            if (modal) {
-                modal.remove();
+    async function deleteImageByUrl(imageUrl) {
+        const token = getToken();
+        try {
+            const r = await fetch('https://api.gold-authentication.com.py/imagenes/url', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ url_imagen: imageUrl })
+            });
+            if (r.ok) {
+                showNotification('success', 'Imagen eliminada', 'Se eliminó la imagen');
+                await fetchProducts();
+            } else {
+                showNotification('error', 'Error', 'No se eliminó la imagen');
             }
+        } catch {
+            showNotification('error', 'Error de red', 'Sin conexión');
         }
+    }
 
-        // Función para confirmar eliminación de imagen específica
-        function deleteSpecificImage(imageUrl, productCode) {
-            showCustomConfirm(
-                'Esta imagen se eliminará permanentemente. ¿Continuar?',
-                async function() {
-                    await deleteImageByUrl(imageUrl);
-                    closeImageManager();
-                    // Reabrir el modal con las imágenes actualizadas
-                    const updatedProduct = products.find(p => p.codigo === productCode);
-                    if (updatedProduct && updatedProduct.imagenes && updatedProduct.imagenes.length > 0) {
-                        showImageManager(productCode, updatedProduct.nombre, updatedProduct.imagenes);
-                    }
-                }
-            );
-        }
-
-        // Función para confirmar eliminación de todas las imágenes
-        function deleteAllImagesConfirm(productCode, productName) {
-            showCustomConfirm(
-                `Se eliminarán TODAS las imágenes del producto "${productName}". Esta acción no se puede deshacer.`,
-                async function() {
-                    await deleteAllProductImages(productCode);
-                    closeImageManager();
-                }
-            );
-        }
-
-        // Modifica la función deleteProductAPI para que exista
-        async function deleteProductAPI(productCode) {
-            const token = getTokenFromCookies();
-            try {
-                const response = await fetch(`https://api.gold-authentication.com.py/productos/${encodeURIComponent(productCode)}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                
-                if (response.ok) {
-                    await fetchProducts();
-                    showNotification('success', 'Producto eliminado', 'El producto se eliminó correctamente');
-                } else {
-                    showNotification('error', 'Error', 'No se pudo eliminar el producto');
-                }
-            } catch (error) {
-                showNotification('error', 'Error de conexión', 'No se pudo conectar con el servidor');
+    async function deleteProductAPI(productCode) {
+        const token = getToken();
+        try {
+            const r = await fetch(`https://api.gold-authentication.com.py/productos/${encodeURIComponent(productCode)}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (r.ok) {
+                await fetchProducts();
+                showNotification('success', 'Producto eliminado', 'Se eliminó correctamente');
+            } else {
+                showNotification('error', 'Error', 'No se eliminó el producto');
             }
+        } catch {
+            showNotification('error', 'Error de red', 'Sin conexión');
         }
-        // Función para obtener el token de las cookies
-        function getTokenFromCookies() {
-            return localStorage.getItem("token");
-        }
+    }
 
-        // Función para verificar autenticación con la API
-        async function checkAuth() {
-            // Primero verificar autenticación local
-            const isAuth = localStorage.getItem('goldAuth') === 'true';
-            const authTime = localStorage.getItem('goldAuthTime');
-            
-            if (!isAuth || !authTime) {
-                console.log('No hay autenticación local');
-                window.location.href = 'login.html';
-                return false;
-            }
-            
-            // Verificar si la sesión no ha expirado (24 horas)
-            const sessionAge = Date.now() - parseInt(authTime);
-            const maxSessionAge = 24 * 60 * 60 * 1000; // 24 horas
-            
-            if (sessionAge >= maxSessionAge) {
-                console.log('Sesión expirada');
-                localStorage.removeItem('goldAuth');
-                localStorage.removeItem('goldUser');
-                localStorage.removeItem('goldAuthTime');
-                localStorage.removeItem('token');
-                window.location.href = 'login.html';
-                return false;
-            }
-            
-            // Verificar token con la API
-            const token = localStorage.getItem("token");
-            
-            if (!token) {
-                console.log('No hay token');
-                window.location.href = 'login.html';
-                return false;
-            }
-
-            try {
-                const response = await fetch('https://api.gold-authentication.com.py/verificar-token', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                
-                if (!response.ok) {
-                    console.log('Token inválido');
-                    localStorage.removeItem('goldAuth');
-                    localStorage.removeItem('goldUser');
-                    localStorage.removeItem('goldAuthTime');
-                    localStorage.removeItem('token');
-                    window.location.href = 'login.html';
-                    return false;
-                }
-                
-                return true;
-            } catch (error) {
-                console.log('Error verificando token:', error);
-                localStorage.removeItem('goldAuth');
-                localStorage.removeItem('goldUser');
-                localStorage.removeItem('goldAuthTime');
-                localStorage.removeItem('token');
-                window.location.href = 'login.html';
-                return false;
-            }
-        }
-
-        // Función para cerrar sesión
-        function logout() {
-            showCustomConfirm(
-                '¿Estás seguro de que quieres cerrar sesión?',
-                function() {
-                    localStorage.removeItem('goldAuth');
-                    localStorage.removeItem('goldUser');
-                    localStorage.removeItem('goldAuthTime');
-                    localStorage.removeItem('token');
-                    window.location.href = 'login.html';
-                }
-            );
-        }
-
-        // Actualiza setupAutoLogout:
-function setupAutoLogout() {
-    window.addEventListener('beforeunload', function() {
-        // No eliminar en beforeunload para permitir recargas de página
-    });
-
-    let inactivityTimer;
-    
-    function resetInactivityTimer() {
-        clearTimeout(inactivityTimer);
-        inactivityTimer = setTimeout(() => {
-            localStorage.removeItem('goldAuth');
-            localStorage.removeItem('goldUser');
-            localStorage.removeItem('goldAuthTime');
-            localStorage.removeItem('token');
-            alert('Sesión cerrada por inactividad');
+    // checkAuth ahora NO menciona cookies
+    async function checkAuth() {
+        const isAuth = localStorage.getItem('goldAuth') === 'true';
+        const authTime = localStorage.getItem('goldAuthTime');
+        if (!isAuth || !authTime) {
             window.location.href = 'login.html';
-        }, 300000); // 5 minutos
+            return false;
+        }
+        const sessionAge = Date.now() - parseInt(authTime);
+        if (sessionAge >= 24 * 60 * 60 * 1000) {
+            localStorage.clear();
+            window.location.href = 'login.html';
+            return false;
+        }
+        const token = getToken();
+        if (!token) {
+            localStorage.clear();
+            window.location.href = 'login.html';
+            return false;
+        }
+        try {
+            const r = await fetch('https://api.gold-authentication.com.py/verificar-token', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!r.ok) {
+                localStorage.clear();
+                window.location.href = 'login.html';
+                return false;
+            }
+            return true;
+        } catch {
+            localStorage.clear();
+            window.location.href = 'login.html';
+            return false;
+        }
     }
 
-    ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'].forEach(event => {
-        document.addEventListener(event, resetInactivityTimer, true);
-    });
-
-    resetInactivityTimer();
-}
-        // Inicializar
-        document.addEventListener('DOMContentLoaded', async function() {
-            const isAuth = await checkAuth();
-            if (!isAuth) return;
-
-            setupAutoLogout();
-
-            await fetchProducts();
-
-            if(document.getElementById('imagesContainer').children.length === 0) {
-                addImageInput();
-            }
-            // filteredProducts = [...products]; // Ya se asigna en fetchProducts
+    function logout() {
+        showCustomConfirm('¿Cerrar sesión?', function() {
+            localStorage.clear();
+            window.location.href = 'login.html';
         });
-    </script>
+    }
+</script>
 </body>
 </html>
