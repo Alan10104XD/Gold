@@ -94,6 +94,21 @@
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
+
+        .password-reset-link {
+            color: #10B981;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .password-reset-link:hover {
+            color: #059669;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
@@ -136,7 +151,6 @@
                 />
             </div>
             
-            
             <button 
                 type="submit" 
                 id="loginBtn"
@@ -144,6 +158,16 @@
             >
                 <span id="loginBtnText">Iniciar sesión</span>
             </button>
+
+            <!-- Enlace para cambiar contraseña -->
+            <div class="text-center mt-4">
+                <a href="passwordReset.html" class="password-reset-link">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-11.639 2.755M15 7a2 2 0 00-2 2m2-2h2a2 2 0 012 2m0 0v10a2 2 0 01-2 2H9a2 2 0 01-2-2V9a2 2 0 012-2h2m0 0V7a2 2 0 012-2m-2 2a2 2 0 012 2m0 0h2a2 2 0 012 2"></path>
+                    </svg>
+                    Cambiar contraseña
+                </a>
+            </div>
         </form>
     </div>
 
@@ -160,6 +184,35 @@
             }, 3000);
         }
 
+        // Función para redirigir a cambio de contraseña
+        function redirectToPasswordReset() {
+            // Verificar si el usuario está autenticado
+            const isAuth = localStorage.getItem('goldAuth') === 'true';
+            const authTime = localStorage.getItem('goldAuthTime');
+            const token = localStorage.getItem('token');
+            
+            if (isAuth && authTime && token) {
+                // Verificar si la sesión no ha expirado
+                const sessionAge = Date.now() - parseInt(authTime);
+                const maxSessionAge = 24 * 60 * 60 * 1000; // 24 horas
+                
+                if (sessionAge < maxSessionAge) {
+                    // Sesión válida, redirigir a passwordReset
+                    window.location.href = 'passwordReset.html';
+                } else {
+                    // Sesión expirada
+                    localStorage.removeItem('goldAuth');
+                    localStorage.removeItem('goldUser');
+                    localStorage.removeItem('goldAuthTime');
+                    localStorage.removeItem('token');
+                    showToast('Tu sesión ha expirado. Inicia sesión primero para cambiar tu contraseña.', 'error');
+                }
+            } else {
+                // No autenticado
+                showToast('Debes iniciar sesión primero para cambiar tu contraseña.', 'error');
+            }
+        }
+
         // Función para cerrar sesión automáticamente
         function setupAutoLogout() {
             // Cerrar sesión cuando se cierre la ventana/pestaña
@@ -168,7 +221,7 @@
                 localStorage.removeItem('goldUser');
             });
 
-            // Cerrar sesión cuando se pierde el foco de la ventana por más de 5 minutos
+            // Cerrar sesión cuando se pierde el foco de la ventana por más de 50 minutos
             let inactivityTimer;
             
             function resetInactivityTimer() {
