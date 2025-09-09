@@ -1572,6 +1572,10 @@ function closeImageModal() {
             
             if (!token) {
                 console.log('No hay token');
+                localStorage.removeItem('goldAuth');
+                localStorage.removeItem('goldUser');
+                localStorage.removeItem('goldAuthTime');
+                localStorage.removeItem('token');
                 window.location.href = 'login.html';
                 return false;
             }
