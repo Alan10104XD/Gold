@@ -176,6 +176,7 @@
                 inactivityTimer = setTimeout(() => {
                     localStorage.removeItem('goldAuth');
                     localStorage.removeItem('goldUser');
+                    localStorage.removeItem('token');
                     showToast('Sesión cerrada por inactividad', 'error');
                     setTimeout(() => {
                         window.location.href = 'login.html';
